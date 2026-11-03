@@ -4,9 +4,9 @@ import {
   parseAuthResult
 } from "@better-auth-ui/core"
 import { useAuth } from "@better-auth-ui/react"
+import { cn } from "cn"
 import { CircleCheckIcon, CircleXIcon, TriangleAlertIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-
 import { Button } from "#/components/ui/button.tsx"
 import {
   Card,
@@ -15,7 +15,6 @@ import {
   CardHeader,
   CardTitle
 } from "#/components/ui/card.tsx"
-import { cn } from "cn"
 
 type AuthResultProps = {
   className?: string
@@ -35,7 +34,7 @@ function AuthResultView({ className, fallbackIntent }: AuthResultProps) {
   const message = getAuthResultMessage(result, localization)
   const action = (() => {
     switch (result.action) {
-      case "accountSettings":
+      case "settings":
         return {
           label: localization.auth.callbackViewAccountSettings,
           to: `${basePaths.settings}/${viewPaths.settings.security}`

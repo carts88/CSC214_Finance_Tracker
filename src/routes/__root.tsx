@@ -8,6 +8,7 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import type { ComponentProps } from 'react'
+import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '#/components/auth/auth-provider'
 import { Navbar } from '#/components/navbar'
 import { Toaster } from '#/components/ui/sonner'
@@ -55,29 +56,37 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const showNavbar = !pathname.startsWith('/auth')
   return (
-    <html lang="en">
+    // next-themes sets the `dark` class on <html> before hydration, so React must not warn about it.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
-        {/* QueryClientProvider is supplied by setupRouterSsrQueryIntegration in router.tsx */}
-        <AuthProvider
-          authClient={authClient}
-          emailAndPassword={{ requireEmailVerification: false }} // matches the branch's "Verify email at signup" (off)
-          navigate={({ to, replace }) => {
-            const path = getSafeRedirectTo(to, window.location.origin)
-            const target = path.startsWith('//') ? '/' : path
-            void router.navigate({ href: target, replace })
-          }}
-          Link={RouterLink}
-          redirectTo="/"
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-          <TooltipProvider>
-            {showNavbar && <Navbar />}
-            {children}
-          </TooltipProvider>
-          <Toaster />
-        </AuthProvider>
+          {/* QueryClientProvider is supplied by setupRouterSsrQueryIntegration in router.tsx */}
+          <AuthProvider
+            authClient={authClient}
+            emailAndPassword={{ requireEmailVerification: false }} // matches the branch's "Verify email at signup" (off)
+            navigate={({ to, replace }) => {
+              const path = getSafeRedirectTo(to, window.location.origin)
+              const target = path.startsWith('//') ? '/' : path
+              void router.navigate({ href: target, replace })
+            }}
+            Link={RouterLink}
+            redirectTo="/"
+          >
+            <TooltipProvider>
+              {showNavbar && <Navbar />}
+              {children}
+            </TooltipProvider>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
         <TanStackDevtools
           config={{
             position: 'bottom-right',

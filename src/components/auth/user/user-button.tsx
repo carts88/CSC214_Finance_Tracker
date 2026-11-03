@@ -5,9 +5,12 @@ import {
   ChevronsUpDown,
   LogIn,
   LogOut,
+  Moon,
   Settings,
+  Sun,
   UserPlus2
 } from "lucide-react"
+import { useTheme } from "next-themes"
 import { isValidElement, type ReactElement, type ReactNode } from "react"
 
 import { buttonVariants } from "#/components/ui/button.tsx"
@@ -17,9 +20,15 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from "#/components/ui/dropdown-menu.tsx"
+import { THEME_OPTIONS } from "#/lib/theme"
 import { cn } from "cn"
 import { UserAvatar } from "./user-avatar"
 import { UserView } from "./user-view"
@@ -83,6 +92,34 @@ function renderUserLink(
       {icon}
       {label}
     </DropdownMenuItem>
+  )
+}
+
+/** "Theme" submenu with Light / Dark / System choices, backed by next-themes. */
+function ThemeSubmenu() {
+  const { theme, resolvedTheme, setTheme } = useTheme()
+  const TriggerIcon = resolvedTheme === "dark" ? Moon : Sun
+
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <TriggerIcon className="text-muted-foreground" />
+        Theme
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        <DropdownMenuRadioGroup
+          value={theme ?? "system"}
+          onValueChange={setTheme}
+        >
+          {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+            <DropdownMenuRadioItem key={value} value={value}>
+              <Icon className="text-muted-foreground" />
+              {label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   )
 }
 
@@ -198,7 +235,7 @@ export function UserButton({
               <DropdownMenuItem
                 onClick={() =>
                   navigate({
-                    to: `${basePaths.settings}/${viewPaths.settings.account}`
+                    to: basePaths.settings
                   })
                 }
               >
@@ -213,6 +250,8 @@ export function UserButton({
                 <Item key={`${plugin.id}-${index.toString()}`} />
               ))
             )}
+
+            <ThemeSubmenu />
 
             <DropdownMenuSeparator />
 
@@ -255,6 +294,8 @@ export function UserButton({
 
               {localization.auth.signUp}
             </DropdownMenuItem>
+
+            <ThemeSubmenu />
 
             {plugins.flatMap((plugin) =>
               plugin.userMenuItems?.map((Item, index) => (
