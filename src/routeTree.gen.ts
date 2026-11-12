@@ -13,7 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiMeRouteImport } from './routes/api/me'
 import { Route as AuthPathRouteImport } from './routes/auth.$path'
+import { Route as ExpenseManagementIndexRouteImport } from './routes/expense-management/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -35,9 +37,19 @@ const AuthPathRoute = AuthPathRouteImport.update({
   path: '/auth/$path',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExpenseManagementIndexRoute = ExpenseManagementIndexRouteImport.update({
+  id: '/expense-management/',
+  path: '/expense-management/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransactionsIndexRoute = TransactionsIndexRouteImport.update({
+  id: '/transactions/',
+  path: '/transactions/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -46,14 +58,18 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/me': typeof ApiMeRoute
   '/auth/$path': typeof AuthPathRoute
+  '/expense-management/': typeof ExpenseManagementIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/transactions/': typeof TransactionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/health': typeof ApiHealthRoute
   '/api/me': typeof ApiMeRoute
   '/auth/$path': typeof AuthPathRoute
+  '/expense-management': typeof ExpenseManagementIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/transactions': typeof TransactionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,15 +77,38 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/me': typeof ApiMeRoute
   '/auth/$path': typeof AuthPathRoute
+  '/expense-management/': typeof ExpenseManagementIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/transactions/': typeof TransactionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/health' | '/api/me' | '/auth/$path' | '/settings/'
+  fullPaths:
+    | '/'
+    | '/api/health'
+    | '/api/me'
+    | '/auth/$path'
+    | '/expense-management/'
+    | '/settings/'
+    | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/health' | '/api/me' | '/auth/$path' | '/settings'
+  to:
+    | '/'
+    | '/api/health'
+    | '/api/me'
+    | '/auth/$path'
+    | '/expense-management'
+    | '/settings'
+    | '/transactions'
   id:
-    '__root__' | '/' | '/api/health' | '/api/me' | '/auth/$path' | '/settings/'
+    | '__root__'
+    | '/'
+    | '/api/health'
+    | '/api/me'
+    | '/auth/$path'
+    | '/expense-management/'
+    | '/settings/'
+    | '/transactions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,7 +116,9 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiMeRoute: typeof ApiMeRoute
   AuthPathRoute: typeof AuthPathRoute
+  ExpenseManagementIndexRoute: typeof ExpenseManagementIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  TransactionsIndexRoute: typeof TransactionsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -110,11 +151,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/expense-management/': {
+      id: '/expense-management/'
+      path: '/expense-management'
+      fullPath: '/expense-management/'
+      preLoaderRoute: typeof ExpenseManagementIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/': {
       id: '/settings/'
       path: '/settings'
       fullPath: '/settings/'
       preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transactions/': {
+      id: '/transactions/'
+      path: '/transactions'
+      fullPath: '/transactions/'
+      preLoaderRoute: typeof TransactionsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -125,7 +180,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiMeRoute: ApiMeRoute,
   AuthPathRoute: AuthPathRoute,
+  ExpenseManagementIndexRoute: ExpenseManagementIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  TransactionsIndexRoute: TransactionsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
