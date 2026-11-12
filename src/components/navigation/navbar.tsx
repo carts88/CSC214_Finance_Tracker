@@ -1,6 +1,6 @@
 import { useSession } from "@better-auth-ui/react";
-import { Link, type LinkProps } from "@tanstack/react-router";
-import { LayoutDashboard, type LucideIcon, Menu, Wallet } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Menu, Wallet } from "lucide-react";
 import { useState } from "react";
 import { UserButton } from "#/components/auth/user/user-button";
 import { Button } from "#/components/ui/button";
@@ -19,17 +19,8 @@ import {
 	SheetTrigger,
 } from "#/components/ui/sheet";
 import { authClient } from "#/lib/auth-client";
+import { NAV_ITEMS } from "./navigation-config";
 
-type NavItem = {
-	label: string;
-	to: LinkProps["to"];
-	icon: LucideIcon;
-};
-
-// Add new pages here; they show up in both the desktop bar and mobile sidebar.
-const NAV_ITEMS: NavItem[] = [
-	{ label: "Dashboard", to: "/", icon: LayoutDashboard },
-];
 
 export function Navbar() {
 	const [open, setOpen] = useState(false);

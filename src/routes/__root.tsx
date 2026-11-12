@@ -10,7 +10,7 @@ import {
 import type { ComponentProps } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '#/components/auth/auth-provider'
-import { Navbar } from '#/components/navbar'
+import { Navbar } from '#/components/navigation/navbar'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { authClient } from '#/lib/auth-client'
