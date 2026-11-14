@@ -9,11 +9,11 @@ export { type MembershipRole, WRITE_ROLES } from "#/database/accounts/roles";
  * @returns the role, or null if the user isn't an active member of the account
  */
 export const getAccountRole = async ({
-	userId,
-	accountId,
+	user_id: userId,
+	account_id: accountId,
 }: {
-	userId: string;
-	accountId: string;
+	user_id: string;
+	account_id: string;
 }): Promise<MembershipRole | null> => {
 	const sql = getSql();
 	const rows = (await sql`
@@ -29,18 +29,21 @@ export const getAccountRole = async ({
 /**
  * Throws unless the user is an active member of the account and, when `roles`
  * is given, holds one of those roles. Call this at the top of every server
- * function that takes an `accountId` from the client.
+ * function that takes an `account_id` from the client.
  */
 export const assertAccountAccess = async ({
-	userId,
-	accountId,
+	user_id: userId,
+	account_id: accountId,
 	roles,
 }: {
-	userId: string;
-	accountId: string;
+	user_id: string;
+	account_id: string;
 	roles?: readonly MembershipRole[];
 }): Promise<MembershipRole> => {
-	const role = await getAccountRole({ userId, accountId });
+	const role = await getAccountRole({
+		user_id: userId,
+		account_id: accountId,
+	});
 	// Same message for "not a member" and "wrong role" so callers can't probe
 	// which account ids exist.
 	if (!role || (roles && !roles.includes(role))) {

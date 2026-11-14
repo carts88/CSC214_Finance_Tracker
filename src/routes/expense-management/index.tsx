@@ -137,9 +137,9 @@ function ExpensesCard({ account }: { account: UserAccountRow }) {
 						onClick: () =>
 							saveExpense.mutate(
 								{
-									expenseId: expense.id,
+									expense_id: expense.id,
 									amount: expense.amount,
-									occurredOn: expense.occurred_on,
+									occurred_on: expense.occurred_on,
 									category: expense.category,
 									description: expense.description,
 								},

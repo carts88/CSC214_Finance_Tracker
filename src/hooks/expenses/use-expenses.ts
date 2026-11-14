@@ -19,20 +19,20 @@ export function useExpenses(accountId: string | undefined) {
 	return useQuery({
 		queryKey: expenseKeys.list(accountId ?? ""),
 		queryFn: accountId
-			? () => getExpensesFn({ data: { accountId } })
+			? () => getExpensesFn({ data: { account_id: accountId } })
 			: skipToken,
 	});
 }
 
 /**
- * Creates an expense, or updates one when `expenseId` is passed. Refetches
+ * Creates an expense, or updates one when `expense_id` is passed. Refetches
  * the account's expense list afterwards.
  */
 export function useSaveExpense(accountId: string) {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (values: ExpenseValues & { expenseId?: string }) =>
-			addExpenseFn({ data: { ...values, accountId } }),
+		mutationFn: (values: ExpenseValues & { expense_id?: string }) =>
+			addExpenseFn({ data: { ...values, account_id: accountId } }),
 		onSettled: () =>
 			queryClient.invalidateQueries({ queryKey: expenseKeys.list(accountId) }),
 	});
@@ -43,7 +43,9 @@ export function useRemoveExpense(accountId: string) {
 	const queryClient = useQueryClient(); // get the query client to manage cache and refetching
 	return useMutation({
 		mutationFn: (expenseId: string) =>
-			removeExpenseFn({ data: { accountId, expenseId } }), // calls the server function to remove the expense
+			removeExpenseFn({
+				data: { account_id: accountId, expense_id: expenseId },
+			}), // calls the server function to remove the expense
 		onSettled: () =>
 			// once the mutation is settled (either success or error), invalidate the query for the expense list to refetch it, so stale info is not shown.
 			queryClient.invalidateQueries({ queryKey: expenseKeys.list(accountId) }),

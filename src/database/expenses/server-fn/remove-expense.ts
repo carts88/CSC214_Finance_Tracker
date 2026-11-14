@@ -8,8 +8,8 @@ import { removeUserExpense } from "#/database/expenses/queries.expenses";
 import { authMiddleware } from "#/lib/auth-middleware";
 
 const removeExpenseInput = z.object({
-	accountId: z.uuid(),
-	expenseId: z.uuid(),
+	account_id: z.uuid(),
+	expense_id: z.uuid(),
 });
 
 /**
@@ -21,8 +21,8 @@ export const removeExpenseFn = createServerFn({ method: "POST" })
 	.validator(removeExpenseInput)
 	.handler(async ({ data, context }) => {
 		await assertAccountAccess({
-			userId: context.user.sub,
-			accountId: data.accountId,
+			user_id: context.user.sub,
+			account_id: data.account_id,
 			roles: WRITE_ROLES,
 		});
 		const expense = await removeUserExpense(data);

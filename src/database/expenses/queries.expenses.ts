@@ -17,25 +17,25 @@ export interface ExpenseRow {
 }
 
 interface IExpenseAccount {
-	accountId: string;
+	account_id: string;
 }
 
 interface IExpenseValues {
 	/** Whole cents, e.g. $12.50 -> 1250. Must be > 0. */
 	amount: number;
 	/** Calendar date as 'YYYY-MM-DD'. */
-	occurredOn: string;
+	occurred_on: string;
 	category: string;
 	description?: string | null;
 }
 
 /**
  * Retrieves all expenses for a given finance account, newest first.
- * @param accountId the finance account these expenses belong to
+ * @param account_id the finance account these expenses belong to
  * @returns the account's expenses
  */
 export const getUserExpenses = async ({
-	accountId,
+	account_id: accountId,
 }: IExpenseAccount): Promise<ExpenseRow[]> => {
 	const sql = getSql();
 	return (await sql`
@@ -53,27 +53,27 @@ export const getUserExpenses = async ({
 };
 
 /**
- * Creates an expense, or updates it when `expenseId` is given and already
- * exists. An update only applies if the expense belongs to `accountId`, so one
+ * Creates an expense, or updates it when `expense_id` is given and already
+ * exists. An update only applies if the expense belongs to `account_id`, so one
  * account can't overwrite another account's expense.
  *
- * @param accountId the finance account the expense belongs to
- * @param expenseId optional id of an existing expense to update
+ * @param account_id the finance account the expense belongs to
+ * @param expense_id optional id of an existing expense to update
  * @param amount whole cents
- * @param occurredOn 'YYYY-MM-DD'
+ * @param occurred_on 'YYYY-MM-DD'
  * @param category the expense category
  * @param description optional free-text description
- * @returns the saved expense, or null if `expenseId` belongs to another account
+ * @returns the saved expense, or null if `expense_id` belongs to another account
  */
 export const upsertUserExpense = async ({
-	accountId,
-	expenseId,
+	account_id: accountId,
+	expense_id: expenseId,
 	amount,
-	occurredOn,
+	occurred_on: occurredOn,
 	category,
 	description = null,
 }: IExpenseAccount &
-	IExpenseValues & { expenseId?: string }): Promise<ExpenseRow | null> => {
+	IExpenseValues & { expense_id?: string }): Promise<ExpenseRow | null> => {
 	const sql = getSql();
 	const rows = (await sql`
 		INSERT INTO expenses (id, account_id, amount, occurred_on, category, description)
@@ -105,14 +105,14 @@ export const upsertUserExpense = async ({
 /**
  * Deletes an expense from a given finance account.
  *
- * @param accountId the finance account the expense belongs to
- * @param expenseId the expense to delete
+ * @param account_id the finance account the expense belongs to
+ * @param expense_id the expense to delete
  * @returns the deleted expense, or null if it didn't exist on this account
  */
 export const removeUserExpense = async ({
-	accountId,
-	expenseId,
-}: IExpenseAccount & { expenseId: string }): Promise<ExpenseRow | null> => {
+	account_id: accountId,
+	expense_id: expenseId,
+}: IExpenseAccount & { expense_id: string }): Promise<ExpenseRow | null> => {
 	const sql = getSql();
 	const rows = (await sql`
 		DELETE FROM expenses

@@ -5,7 +5,7 @@ import { getUserExpenses } from "#/database/expenses/queries.expenses";
 import { authMiddleware } from "#/lib/auth-middleware";
 
 const getExpensesInput = z.object({
-	accountId: z.uuid(),
+	account_id: z.uuid(),
 });
 
 /**
@@ -17,8 +17,8 @@ export const getExpensesFn = createServerFn({ method: "GET" })
 	.validator(getExpensesInput)
 	.handler(async ({ data, context }) => {
 		await assertAccountAccess({
-			userId: context.user.sub,
-			accountId: data.accountId,
+			user_id: context.user.sub,
+			account_id: data.account_id,
 		});
-		return getUserExpenses({ accountId: data.accountId });
+		return getUserExpenses({ account_id: data.account_id });
 	});

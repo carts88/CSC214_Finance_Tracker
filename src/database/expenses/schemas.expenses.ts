@@ -13,7 +13,7 @@ export const expenseValuesSchema = z.object({
 		.positive("Enter an amount greater than $0")
 		.max(Number.MAX_SAFE_INTEGER),
 	/** Calendar date as 'YYYY-MM-DD'. */
-	occurredOn: z.iso.date("Pick a date"),
+	occurred_on: z.iso.date("Pick a date"),
 	category: z
 		.string()
 		.trim()

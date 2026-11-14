@@ -13,6 +13,6 @@ export const getMyAccountsFn = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
 		const userId = context.user.sub;
-		await ensurePersonalAccount({ userId });
-		return getUserAccounts({ userId });
+		await ensurePersonalAccount({ user_id: userId });
+		return getUserAccounts({ user_id: userId });
 	});

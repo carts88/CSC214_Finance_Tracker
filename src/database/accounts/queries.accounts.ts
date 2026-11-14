@@ -15,12 +15,12 @@ export interface UserAccountRow {
  * "Personal" if they don't. Safe to call on every visit: a per-user advisory
  * lock stops two simultaneous first visits from creating two accounts.
  *
- * @param userId the Neon Auth user id
+ * @param user_id the Neon Auth user id
  */
 export const ensurePersonalAccount = async ({
-	userId,
+	user_id: userId,
 }: {
-	userId: string;
+	user_id: string;
 }): Promise<void> => {
 	const sql = getSql();
 	await sql.transaction([
@@ -52,12 +52,12 @@ export const ensurePersonalAccount = async ({
  * Lists the finance accounts the user is an active member of, personal
  * accounts first.
  *
- * @param userId the Neon Auth user id
+ * @param user_id the Neon Auth user id
  */
 export const getUserAccounts = async ({
-	userId,
+	user_id: userId,
 }: {
-	userId: string;
+	user_id: string;
 }): Promise<UserAccountRow[]> => {
 	const sql = getSql();
 	return (await sql`
