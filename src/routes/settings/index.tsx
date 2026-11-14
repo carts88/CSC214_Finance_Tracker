@@ -16,10 +16,10 @@ export const Route = createFileRoute("/settings/")({
 
 function SettingsPage() {
 	return (
-		<main className="mx-auto flex max-w-3xl flex-col gap-6 p-4 md:p-8">
+		<div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 md:p-8">
 			<h1 className="text-3xl font-bold">Settings</h1>
 			<AppearanceCard />
-		</main>
+		</div>
 	);
 }
 

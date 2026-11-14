@@ -35,8 +35,8 @@ function Home() {
 	if (!data) return null;
 
 	return (
-		<main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-8">
+		<div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-8">
 			<h1 className="text-3xl font-bold">Dashboard</h1>
-		</main>
+		</div>
 	);
 }
