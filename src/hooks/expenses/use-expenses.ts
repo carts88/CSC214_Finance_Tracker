@@ -7,18 +7,13 @@ import {
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import type { ExpenseValues } from "#/database/expenses/schemas.expenses";
 import { addExpenseFn } from "#/database/expenses/server-fn/add-expense";
-import { getExpenseSummaryFn } from "#/database/expenses/server-fn/get-expense-summary";
 import { getExpensesFn } from "#/database/expenses/server-fn/get-expenses";
 import { removeExpenseFn } from "#/database/expenses/server-fn/remove-expense";
 import { stopRecurringExpenseFn } from "#/database/expenses/server-fn/stop-recurring-expense";
+import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
 
 export const expenseKeys = {
-	all: ["expenses"] as const,
-	/** Everything cached for one account (the list and its summaries). */
-	account: (accountId: string) => ["expenses", accountId] as const,
-	list: (accountId: string) => ["expenses", accountId, "list"] as const,
-	summary: (accountId: string, from: string, to: string) =>
-		["expenses", accountId, "summary", from, to] as const,
+	list: (accountId: string) => ["expenses", accountId] as const,
 };
 
 /**
@@ -35,24 +30,29 @@ export function useExpenses(accountId: string | undefined) {
 }
 
 /**
- * Total spent this calendar month (in the viewer's timezone), counting every
- * occurrence of recurring expenses that falls in the month.
+ * Whole cents spent this calendar month, or undefined while expenses load.
+ * A repeating expense counts once for every time it happens this month.
+ * Reuses the `useExpenses` data, so it doesn't make an extra request.
  */
-export function useExpenseSummary(accountId: string | undefined) {
+export function useMonthTotal(accountId: string | undefined) {
+	const expenses = useExpenses(accountId);
+	if (!expenses.data) return undefined;
+
 	const today = new Date();
 	const from = format(startOfMonth(today), "yyyy-MM-dd");
 	const to = format(endOfMonth(today), "yyyy-MM-dd");
-	return useQuery({
-		queryKey: expenseKeys.summary(accountId ?? "", from, to),
-		queryFn: accountId
-			? () => getExpenseSummaryFn({ data: { accountId, from, to } })
-			: skipToken,
-	});
+
+	let total = 0;
+	for (const expense of expenses.data) {
+		const times = occurrencesBetween(expense, from, to).length;
+		total += expense.amount * times;
+	}
+	return total;
 }
 
 /**
  * Creates an expense, or updates one when `expenseId` is passed. Refetches
- * the account's expense list and summaries afterwards.
+ * the account's expense list afterwards.
  */
 export function useSaveExpense(accountId: string) {
 	const queryClient = useQueryClient();
@@ -61,7 +61,7 @@ export function useSaveExpense(accountId: string) {
 			addExpenseFn({ data: { ...values, accountId } }),
 		onSettled: () =>
 			queryClient.invalidateQueries({
-				queryKey: expenseKeys.account(accountId),
+				queryKey: expenseKeys.list(accountId),
 			}),
 	});
 }
@@ -73,9 +73,9 @@ export function useRemoveExpense(accountId: string) {
 		mutationFn: (expenseId: string) =>
 			removeExpenseFn({ data: { accountId, expenseId } }), // calls the server function to remove the expense
 		onSettled: () =>
-			// once the mutation is settled (either success or error), invalidate the account's expense queries to refetch them, so stale info is not shown.
+			// once the mutation is settled (either success or error), refetch the expense list so stale info is not shown.
 			queryClient.invalidateQueries({
-				queryKey: expenseKeys.account(accountId),
+				queryKey: expenseKeys.list(accountId),
 			}),
 	});
 }
@@ -88,7 +88,7 @@ export function useStopRecurringExpense(accountId: string) {
 			stopRecurringExpenseFn({ data: { accountId, expenseId } }),
 		onSettled: () =>
 			queryClient.invalidateQueries({
-				queryKey: expenseKeys.account(accountId),
+				queryKey: expenseKeys.list(accountId),
 			}),
 	});
 }

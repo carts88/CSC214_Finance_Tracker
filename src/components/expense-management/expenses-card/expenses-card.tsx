@@ -17,8 +17,8 @@ import type { UserAccountRow } from "#/database/accounts/queries.accounts";
 import { canWrite } from "#/database/accounts/roles";
 import type { ExpenseRow } from "#/database/expenses/queries.expenses";
 import {
-	useExpenseSummary,
 	useExpenses,
+	useMonthTotal,
 	useRemoveExpense,
 	useSaveExpense,
 	useStopRecurringExpense,
@@ -35,7 +35,7 @@ interface IExpensesCard {
 
 export function ExpensesCard({ account }: IExpensesCard) {
 	const expenses = useExpenses(account.id);
-	const summary = useExpenseSummary(account.id);
+	const monthTotal = useMonthTotal(account.id);
 	const removeExpense = useRemoveExpense(account.id);
 	const saveExpense = useSaveExpense(account.id);
 	const stopExpense = useStopRecurringExpense(account.id);
@@ -137,7 +137,7 @@ export function ExpensesCard({ account }: IExpensesCard) {
 					<ExpenseTable
 						expenses={expenses.data}
 						currency={account.base_currency}
-						monthTotal={summary.data?.total}
+						monthTotal={monthTotal}
 						canEdit={editable}
 						onEdit={setSheet}
 						onDelete={handleDelete}

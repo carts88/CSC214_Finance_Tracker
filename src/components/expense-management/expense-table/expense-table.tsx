@@ -12,6 +12,7 @@ import {
 import type { ExpenseRow } from "#/database/expenses/queries.expenses";
 import { frequencyLabel } from "#/database/schemas.recurrence";
 import { formatDate } from "#/lib/utils/formatters/dates";
+import { nextOccurrence } from "#/lib/utils/helpers/recurrence";
 
 interface IExpenseTable {
 	expenses: ExpenseRow[];
@@ -34,8 +35,9 @@ function RepeatsCell({ expense }: { expense: ExpenseRow }) {
 	if (expense.frequency === "never") {
 		return <span className="text-muted-foreground">—</span>;
 	}
-	const status = expense.next_occurrence
-		? `next ${formatDate(expense.next_occurrence)}`
+	const next = nextOccurrence(expense);
+	const status = next
+		? `next ${formatDate(next)}`
 		: expense.end_date
 			? `ended ${formatDate(expense.end_date)}`
 			: null;
@@ -84,7 +86,7 @@ export const ExpenseTable = ({
 				{expenses.map((expense) => {
 					// Still has occurrences ahead of it (or hasn't started yet).
 					const isActiveSeries =
-						expense.frequency !== "never" && expense.next_occurrence !== null;
+						nextOccurrence(expense) !== null;
 					return (
 						<TableRow key={expense.id}>
 							<TableCell className="whitespace-nowrap">

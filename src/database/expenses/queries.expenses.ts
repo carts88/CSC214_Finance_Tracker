@@ -105,55 +105,6 @@ export const getUserExpenses = async ({
 };
 
 /**
- * Every dated occurrence of the account's expenses between `from` and `to`
- * (inclusive), with recurring series expanded. Use this for totals and
- * reports; one-offs appear once, series once per occurrence in range.
- *
- * @param accountId the finance account the expenses belong to
- * @param from first date to include, 'YYYY-MM-DD'
- * @param to last date to include, 'YYYY-MM-DD'
- * @returns occurrences ordered by date
- */
-export const getExpenseOccurrences = async ({
-	accountId,
-	from,
-	to,
-}: IExpenseAccount & {
-	from: string;
-	to: string;
-}): Promise<ExpenseOccurrenceRow[]> => {
-	const sql = getSql();
-	return (await sql`
-		SELECT
-			e.id
-			, e.amount::float8 AS amount
-			, o.on_date::text AS occurred_on
-			, e.category
-			, e.description
-		FROM expenses e
-		CROSS JOIN LATERAL (
-			-- One-off: its own date.
-			SELECT e.occurred_on AS on_date
-			WHERE e.frequency = 'never'
-			UNION ALL
-			-- Series: every step from occurred_on up to end_date / range end.
-			SELECT (e.occurred_on + k.n * recurrence_step(e.frequency))::date
-			FROM generate_series(
-				0,
-				(LEAST(COALESCE(e.end_date, ${to}::date), ${to}::date) - e.occurred_on)
-					/ recurrence_min_days(e.frequency)
-			) AS k(n)
-			WHERE e.frequency <> 'never'
-		) o
-		WHERE e.account_id = ${accountId}
-			AND e.occurred_on <= ${to}::date
-			AND o.on_date BETWEEN ${from}::date AND ${to}::date
-			AND (e.end_date IS NULL OR o.on_date <= e.end_date)
-		ORDER BY o.on_date, e.created_at
-	`) as ExpenseOccurrenceRow[];
-};
-
-/**
  * Creates an expense, or updates it when `expenseId` is given and already
  * exists. An update only applies if the expense belongs to `accountId`, so one
  * account can't overwrite another account's expense. Updating a recurring

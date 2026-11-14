@@ -58,13 +58,20 @@ export function refineRecurrence<
 	}>,
 >(schema: T) {
 	return schema.superRefine((values, ctx) => {
+		
+		// if the user hasn't entered an end date, there's nothing to validate.
 		if (!values.endDate) return;
+
+
+		// if the frequency is 'never', an end date is not allowed. If the end date
 		if (values.frequency === "never") {
 			ctx.addIssue({
 				code: "custom",
 				message: "Only repeating entries can have an end date",
 				path: ["endDate"],
 			});
+
+			// if the end date is before the start date, that's not allowed either.
 		} else if (values.endDate < values.occurredOn) {
 			ctx.addIssue({
 				code: "custom",

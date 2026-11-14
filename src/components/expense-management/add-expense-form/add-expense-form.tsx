@@ -4,19 +4,13 @@ import { useAppForm } from "#/components/form/use-app-form";
 import { FieldGroup } from "#/components/ui/field";
 import type { ExpenseRow } from "#/database/expenses/queries.expenses";
 import {
-	EXPENSE_CATEGORIES,
 	type ExpenseValues,
 	expenseValuesSchema,
 } from "#/database/expenses/schemas.expenses";
 import { FREQUENCIES } from "#/database/schemas.recurrence";
 import { useSaveExpense } from "#/hooks/expenses/use-expenses";
+import { categoryOptions } from "../utils/expense.utils";
 
-/** The preset categories, plus the expense's own one if it isn't a preset. */
-function categoryOptions(current?: string) {
-	const categories: string[] = [...EXPENSE_CATEGORIES];
-	if (current && !categories.includes(current)) categories.push(current);
-	return categories.map((category) => ({ value: category, label: category }));
-}
 
 interface AddExpenseFormProps {
 	accountId: string;
