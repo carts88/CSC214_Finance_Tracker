@@ -17,9 +17,11 @@ import type { UserAccountRow } from "#/database/accounts/queries.accounts";
 import { canWrite } from "#/database/accounts/roles";
 import type { ExpenseRow } from "#/database/expenses/queries.expenses";
 import {
+	useExpenseSummary,
 	useExpenses,
 	useRemoveExpense,
 	useSaveExpense,
+	useStopRecurringExpense,
 } from "#/hooks/expenses/use-expenses";
 import { ExpenseFormSheet } from "./expense-form-sheet";
 import { ExpensesEmptyState } from "./expenses-empty-state";
@@ -33,8 +35,10 @@ interface IExpensesCard {
 
 export function ExpensesCard({ account }: IExpensesCard) {
 	const expenses = useExpenses(account.id);
+	const summary = useExpenseSummary(account.id);
 	const removeExpense = useRemoveExpense(account.id);
 	const saveExpense = useSaveExpense(account.id);
+	const stopExpense = useStopRecurringExpense(account.id);
 	const [sheet, setSheet] = useState<SheetState>(null);
 	const editable = canWrite(account.role);
 	const editing = sheet !== null && sheet !== "new" ? sheet : undefined;
@@ -54,6 +58,8 @@ export function ExpensesCard({ account }: IExpensesCard) {
 									occurredOn: expense.occurred_on,
 									category: expense.category,
 									description: expense.description,
+									frequency: expense.frequency,
+									endDate: expense.end_date,
 								},
 								{
 									onError: () => toast.error("Couldn't restore the expense"),
@@ -63,6 +69,40 @@ export function ExpensesCard({ account }: IExpensesCard) {
 				}),
 			onError: (error) =>
 				toast.error("Couldn't delete the expense", {
+					description: error.message,
+				}),
+		});
+	}
+
+	function handleStop(expense: ExpenseRow) {
+		stopExpense.mutate(expense.id, {
+			onSuccess: (stopped) =>
+				toast.success("Stopped repeating", {
+					description: stopped.end_date
+						? `Last occurrence: ${stopped.end_date}`
+						: undefined,
+					action: {
+						label: "Undo",
+						// Re-saving with the original end date resumes the series.
+						onClick: () =>
+							saveExpense.mutate(
+								{
+									expenseId: expense.id,
+									amount: expense.amount,
+									occurredOn: expense.occurred_on,
+									category: expense.category,
+									description: expense.description,
+									frequency: expense.frequency,
+									endDate: expense.end_date,
+								},
+								{
+									onError: () => toast.error("Couldn't resume the expense"),
+								},
+							),
+					},
+				}),
+			onError: (error) =>
+				toast.error("Couldn't stop the expense", {
 					description: error.message,
 				}),
 		});
@@ -97,9 +137,11 @@ export function ExpensesCard({ account }: IExpensesCard) {
 					<ExpenseTable
 						expenses={expenses.data}
 						currency={account.base_currency}
+						monthTotal={summary.data?.total}
 						canEdit={editable}
 						onEdit={setSheet}
 						onDelete={handleDelete}
+						onStop={handleStop}
 					/>
 				)}
 			</CardContent>

@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { CircleStop, Pencil, Repeat, Trash2 } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import {
 	Table,
@@ -10,31 +10,59 @@ import {
 	TableRow,
 } from "#/components/ui/table";
 import type { ExpenseRow } from "#/database/expenses/queries.expenses";
+import { frequencyLabel } from "#/database/schemas.recurrence";
 import { formatDate } from "#/lib/utils/formatters/dates";
 
 interface IExpenseTable {
 	expenses: ExpenseRow[];
 	/** ISO 4217 code used to format amounts, e.g. "USD". */
 	currency: string;
-	/** Hides the edit/delete buttons when false (e.g. for viewers). */
+	/**
+	 * Whole cents spent this month with recurring expenses expanded, or
+	 * undefined while it loads. (Summing the rows would count a series once.)
+	 */
+	monthTotal: number | undefined;
+	/** Hides the edit/delete/stop buttons when false (e.g. for viewers). */
 	canEdit: boolean;
 	onEdit: (expense: ExpenseRow) => void;
 	onDelete: (expense: ExpenseRow) => void;
+	onStop: (expense: ExpenseRow) => void;
 }
 
+/** "Monthly · next Dec 1, 2026", "Weekly · ended Nov 14, 2026", or "—". */
+function RepeatsCell({ expense }: { expense: ExpenseRow }) {
+	if (expense.frequency === "never") {
+		return <span className="text-muted-foreground">—</span>;
+	}
+	const status = expense.next_occurrence
+		? `next ${formatDate(expense.next_occurrence)}`
+		: expense.end_date
+			? `ended ${formatDate(expense.end_date)}`
+			: null;
+	return (
+		<div className="flex items-center gap-1.5 whitespace-nowrap">
+			<Repeat className="size-3.5 text-muted-foreground" aria-hidden />
+			<span>{frequencyLabel(expense.frequency)}</span>
+			{status && (
+				<span className="text-xs text-muted-foreground">· {status}</span>
+			)}
+		</div>
+	);
+}
 
 export const ExpenseTable = ({
 	expenses,
 	currency,
+	monthTotal,
 	canEdit,
 	onEdit,
 	onDelete,
+	onStop,
 }: IExpenseTable) => {
 	const money = new Intl.NumberFormat(undefined, {
 		style: "currency",
 		currency,
 	});
-	const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
 	return (
 		<Table>
@@ -43,57 +71,77 @@ export const ExpenseTable = ({
 					<TableHead>Date</TableHead>
 					<TableHead>Category</TableHead>
 					<TableHead>Description</TableHead>
+					<TableHead>Repeats</TableHead>
 					<TableHead className="text-right">Amount</TableHead>
 					{canEdit && (
-						<TableHead className="w-24">
+						<TableHead className="w-32">
 							<span className="sr-only">Actions</span>
 						</TableHead>
 					)}
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{expenses.map((expense) => (
-					<TableRow key={expense.id}>
-						<TableCell className="whitespace-nowrap">
-							{formatDate(expense.occurred_on)}
-						</TableCell>
-						<TableCell>{expense.category}</TableCell>
-						<TableCell className="max-w-xs truncate text-muted-foreground">
-							{expense.description || "—"}
-						</TableCell>
-						<TableCell className="text-right tabular-nums">
-							{money.format(expense.amount / 100)}
-						</TableCell>
-						{canEdit && (
-							<TableCell>
-								<div className="flex justify-end gap-1">
-									<Button
-										variant="ghost"
-										size="icon-sm"
-										aria-label={`Edit ${expense.category} expense`}
-										onClick={() => onEdit(expense)}
-									>
-										<Pencil />
-									</Button>
-									<Button
-										variant="ghost"
-										size="icon-sm"
-										aria-label={`Delete ${expense.category} expense`}
-										onClick={() => onDelete(expense)}
-									>
-										<Trash2 />
-									</Button>
-								</div>
+				{expenses.map((expense) => {
+					// Still has occurrences ahead of it (or hasn't started yet).
+					const isActiveSeries =
+						expense.frequency !== "never" && expense.next_occurrence !== null;
+					return (
+						<TableRow key={expense.id}>
+							<TableCell className="whitespace-nowrap">
+								{formatDate(expense.occurred_on)}
 							</TableCell>
-						)}
-					</TableRow>
-				))}
+							<TableCell>{expense.category}</TableCell>
+							<TableCell className="max-w-xs truncate text-muted-foreground">
+								{expense.description || "—"}
+							</TableCell>
+							<TableCell>
+								<RepeatsCell expense={expense} />
+							</TableCell>
+							<TableCell className="text-right tabular-nums">
+								{money.format(expense.amount / 100)}
+							</TableCell>
+							{canEdit && (
+								<TableCell>
+									<div className="flex justify-end gap-1">
+										{isActiveSeries && (
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												aria-label={`Stop repeating ${expense.category} expense`}
+												title="Stop repeating"
+												onClick={() => onStop(expense)}
+											>
+												<CircleStop />
+											</Button>
+										)}
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											aria-label={`Edit ${expense.category} expense`}
+											onClick={() => onEdit(expense)}
+										>
+											<Pencil />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											aria-label={`Delete ${expense.category} expense`}
+											onClick={() => onDelete(expense)}
+										>
+											<Trash2 />
+										</Button>
+									</div>
+								</TableCell>
+							)}
+						</TableRow>
+					);
+				})}
 			</TableBody>
 			<TableFooter>
 				<TableRow>
-					<TableCell colSpan={3}>Total</TableCell>
+					<TableCell colSpan={4}>This month</TableCell>
 					<TableCell className="text-right tabular-nums">
-						{money.format(total / 100)}
+						{monthTotal === undefined ? "…" : money.format(monthTotal / 100)}
 					</TableCell>
 					{canEdit && <TableCell />}
 				</TableRow>
