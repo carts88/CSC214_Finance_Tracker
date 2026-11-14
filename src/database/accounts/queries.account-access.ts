@@ -1,13 +1,7 @@
+import type { MembershipRole } from "#/database/accounts/roles";
 import { getSql } from "#/db";
 
-export type MembershipRole = "owner" | "admin" | "member" | "viewer";
-
-/** Roles allowed to create, edit, or delete an account's records. */
-export const WRITE_ROLES: readonly MembershipRole[] = [
-	"owner",
-	"admin",
-	"member",
-];
+export { type MembershipRole, WRITE_ROLES } from "#/database/accounts/roles";
 
 /**
  * Looks up the user's active role on a finance account.

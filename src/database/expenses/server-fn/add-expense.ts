@@ -5,23 +5,13 @@ import {
 	WRITE_ROLES,
 } from "#/database/accounts/queries.account-access";
 import { upsertUserExpense } from "#/database/expenses/queries.expenses";
+import { expenseValuesSchema } from "#/database/expenses/schemas.expenses";
 import { authMiddleware } from "#/lib/auth-middleware";
 
-const addExpenseInput = z.object({
+const addExpenseInput = expenseValuesSchema.extend({
 	accountId: z.uuid(),
 	/** Pass an existing expense's id to edit it instead of creating a new one. */
 	expenseId: z.uuid().optional(),
-	/** Whole cents, e.g. $12.50 -> 1250. */
-	amount: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-	/** Calendar date as 'YYYY-MM-DD'. */
-	occurredOn: z.iso.date(),
-	category: z.string().trim().min(1).max(100),
-	description: z
-		.string()
-		.trim()
-		.max(500)
-		.nullish()
-		.transform((value) => value || null),
 });
 
 export type AddExpenseInput = z.input<typeof addExpenseInput>;
