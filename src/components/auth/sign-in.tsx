@@ -36,7 +36,7 @@ import {
   InputGroupButton,
   InputGroupInput
 } from "#/components/ui/input-group.tsx"
-import { useSignInContinuation } from "#/lib/auth/use-sign-in-continuation.ts"
+import { useSignInContinuation } from "#/lib/auth/use-sign-in-continuation"
 import { cn } from "cn"
 import { isAuthFormFieldInvalid, useAuthForm } from "./auth-form"
 import { LastUsedBadge } from "./last-login-method/last-used-badge"

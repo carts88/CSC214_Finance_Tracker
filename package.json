@@ -10,6 +10,7 @@
     "generate-routes": "vite build",
     "build": "vite build",
     "preview": "vite preview",
+    "db:init": "node --env-file=.env.local db/run-sql.mjs db/init.sql",
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check"
