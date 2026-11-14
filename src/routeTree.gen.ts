@@ -13,7 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiMeRouteImport } from './routes/api/me'
 import { Route as AuthPathRouteImport } from './routes/auth.$path'
-import { Route as ExpenseManagementIndexRouteImport } from './routes/expense-management/index'
+import { Route as FinanceManagementIndexRouteImport } from './routes/finance-management/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
 
@@ -37,9 +37,9 @@ const AuthPathRoute = AuthPathRouteImport.update({
   path: '/auth/$path',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExpenseManagementIndexRoute = ExpenseManagementIndexRouteImport.update({
-  id: '/expense-management/',
-  path: '/expense-management/',
+const FinanceManagementIndexRoute = FinanceManagementIndexRouteImport.update({
+  id: '/finance-management/',
+  path: '/finance-management/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
@@ -58,7 +58,7 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/me': typeof ApiMeRoute
   '/auth/$path': typeof AuthPathRoute
-  '/expense-management/': typeof ExpenseManagementIndexRoute
+  '/finance-management/': typeof FinanceManagementIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
@@ -67,7 +67,7 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/me': typeof ApiMeRoute
   '/auth/$path': typeof AuthPathRoute
-  '/expense-management': typeof ExpenseManagementIndexRoute
+  '/finance-management': typeof FinanceManagementIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/transactions': typeof TransactionsIndexRoute
 }
@@ -77,7 +77,7 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/me': typeof ApiMeRoute
   '/auth/$path': typeof AuthPathRoute
-  '/expense-management/': typeof ExpenseManagementIndexRoute
+  '/finance-management/': typeof FinanceManagementIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
@@ -88,7 +88,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/me'
     | '/auth/$path'
-    | '/expense-management/'
+    | '/finance-management/'
     | '/settings/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
@@ -97,7 +97,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/me'
     | '/auth/$path'
-    | '/expense-management'
+    | '/finance-management'
     | '/settings'
     | '/transactions'
   id:
@@ -106,7 +106,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/me'
     | '/auth/$path'
-    | '/expense-management/'
+    | '/finance-management/'
     | '/settings/'
     | '/transactions/'
   fileRoutesById: FileRoutesById
@@ -116,7 +116,7 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiMeRoute: typeof ApiMeRoute
   AuthPathRoute: typeof AuthPathRoute
-  ExpenseManagementIndexRoute: typeof ExpenseManagementIndexRoute
+  FinanceManagementIndexRoute: typeof FinanceManagementIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   TransactionsIndexRoute: typeof TransactionsIndexRoute
 }
@@ -151,11 +151,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/expense-management/': {
-      id: '/expense-management/'
-      path: '/expense-management'
-      fullPath: '/expense-management/'
-      preLoaderRoute: typeof ExpenseManagementIndexRouteImport
+    '/finance-management/': {
+      id: '/finance-management/'
+      path: '/finance-management'
+      fullPath: '/finance-management/'
+      preLoaderRoute: typeof FinanceManagementIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/': {
@@ -180,7 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiMeRoute: ApiMeRoute,
   AuthPathRoute: AuthPathRoute,
-  ExpenseManagementIndexRoute: ExpenseManagementIndexRoute,
+  FinanceManagementIndexRoute: FinanceManagementIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,
 }

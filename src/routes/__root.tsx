@@ -10,7 +10,14 @@ import {
 import type { ComponentProps } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '#/components/auth/auth-provider'
-import { Navbar } from '#/components/navigation/navbar'
+import { AppSidebar } from '#/components/navigation/app-sidebar'
+import { NAV_ITEMS } from '#/components/navigation/navigation-config'
+import { Separator } from '#/components/ui/separator'
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '#/components/ui/sidebar'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { authClient } from '#/lib/auth-client'
@@ -54,7 +61,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootDocument({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const showNavbar = !pathname.startsWith('/auth')
+  const showSidebar = !pathname.startsWith('/auth')
+  const pageTitle =
+    NAV_ITEMS.find(({ to }) =>
+      to === '/' ? pathname === '/' : pathname.startsWith(to ?? ''),
+    )?.label ?? (pathname.startsWith('/settings') ? 'Settings' : '')
   return (
     // next-themes sets the `dark` class on <html> before hydration, so React must not warn about it.
     <html lang="en" suppressHydrationWarning>
@@ -81,8 +92,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             redirectTo="/"
           >
             <TooltipProvider>
-              {showNavbar && <Navbar />}
-              {children}
+              {showSidebar ? (
+                <SidebarProvider>
+                  <AppSidebar />
+                  <SidebarInset>
+                    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
+                      <SidebarTrigger className="-ml-1" />
+                      <Separator
+                        orientation="vertical"
+                        className="mr-2 data-[orientation=vertical]:h-4"
+                      />
+                      <span className="text-sm font-medium">{pageTitle}</span>
+                    </header>
+                    <div className="flex-1">{children}</div>
+                  </SidebarInset>
+                </SidebarProvider>
+              ) : (
+                children
+              )}
             </TooltipProvider>
             <Toaster />
           </AuthProvider>

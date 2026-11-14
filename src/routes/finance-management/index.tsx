@@ -41,7 +41,7 @@ import {
 } from "#/hooks/expenses/use-expenses";
 import { authClient } from "#/lib/auth-client";
 
-export const Route = createFileRoute("/expense-management/")({
+export const Route = createFileRoute("/finance-management/")({
 	component: ExpenseManagementPage,
 });
 
@@ -64,7 +64,7 @@ function ExpenseManagementPage() {
 	if (!session) return null;
 
 	return (
-		<main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-8">
+		<div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-8">
 			<div className="flex flex-wrap items-center justify-between gap-4">
 				<h1 className="text-3xl font-bold">Expense Management</h1>
 				{accounts.data && accounts.data.length > 1 && account && (
@@ -87,7 +87,7 @@ function ExpenseManagementPage() {
 			) : (
 				<ExpensesCardSkeleton />
 			)}
-		</main>
+		</div>
 	);
 }
 
