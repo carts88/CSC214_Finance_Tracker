@@ -1,12 +1,17 @@
 import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
+import { AddTransactionButtons } from "#/components/common/add-transaction-buttons";
 import { ErrorAlert } from "#/components/common/error-alert";
+import { ExpenseFormSheet } from "#/components/expense-management/expenses-card/expense-form-sheet";
 import { ExpensesCard } from "#/components/expense-management/expenses-card/expenses-card";
 import { ExpensesCardSkeleton } from "#/components/expense-management/expenses-card/expenses-card-skeleton";
+import { IncomeFormSheet } from "#/components/income-management/incomes-card/income-form-sheet";
 import { IncomesCard } from "#/components/income-management/incomes-card/incomes-card";
 import { IncomesCardSkeleton } from "#/components/income-management/incomes-card/incomes-card-skeleton";
+import { HeaderActions } from "#/components/navigation/header-actions";
+import { canWrite } from "#/database/accounts/roles";
 import { useMyAccounts } from "#/hooks/accounts/use-my-accounts";
 import { authClient } from "#/lib/auth-client";
 
@@ -29,6 +34,8 @@ function ExpenseManagementPage() {
 
 	const accounts = useMyAccounts();
 	const [selectedId, setSelectedId] = useState<string>();
+	/** Which "add" sheet the toolbar buttons opened, if any. */
+	const [adding, setAdding] = useState<"income" | "expense" | null>(null);
 	const account =
 		accounts.data?.find((a) => a.id === selectedId) ?? accounts.data?.[0];
 
@@ -49,6 +56,31 @@ function ExpenseManagementPage() {
 				)}
 				
 			</div>
+
+			{account && canWrite(account.role) && (
+				<HeaderActions>
+					<AddTransactionButtons
+						onAddIncome={() => setAdding("income")}
+						onAddExpense={() => setAdding("expense")}
+					/>
+				</HeaderActions>
+			)}
+
+			{account && (
+				// Keyed per account so a half-filled form resets on switch.
+				<Fragment key={account.id}>
+					<IncomeFormSheet
+						account={account}
+						open={adding === "income"}
+						onClose={() => setAdding(null)}
+					/>
+					<ExpenseFormSheet
+						account={account}
+						open={adding === "expense"}
+						onClose={() => setAdding(null)}
+					/>
+				</Fragment>
+			)}
 
 			{accounts.isError ? (
 				<ErrorAlert

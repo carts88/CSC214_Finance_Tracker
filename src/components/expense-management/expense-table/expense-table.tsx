@@ -65,6 +65,10 @@ export const ExpenseTable = ({
 		style: "currency",
 		currency,
 	});
+	// Expenses are stored as positive cents but shown as money out: -$12.50.
+	// (A zero total stays "$0.00" rather than "-$0.00".)
+	const asNegative = (cents: number) =>
+		money.format(cents === 0 ? 0 : -cents / 100);
 
 	return (
 		<Table>
@@ -100,7 +104,7 @@ export const ExpenseTable = ({
 								<RepeatsCell expense={expense} />
 							</TableCell>
 							<TableCell className="text-right tabular-nums">
-								{money.format(expense.amount / 100)}
+								{asNegative(expense.amount)}
 							</TableCell>
 							{canEdit && (
 								<TableCell>
@@ -143,7 +147,7 @@ export const ExpenseTable = ({
 				<TableRow>
 					<TableCell colSpan={4}>This month</TableCell>
 					<TableCell className="text-right tabular-nums">
-						{monthTotal === undefined ? "…" : money.format(monthTotal / 100)}
+						{monthTotal === undefined ? "…" : asNegative(monthTotal)}
 					</TableCell>
 					{canEdit && <TableCell />}
 				</TableRow>

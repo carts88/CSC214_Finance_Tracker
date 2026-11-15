@@ -1,13 +1,10 @@
-import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { ExpenseTable } from "#/components/expense-management/expense-table/expense-table";
 import { ExpenseTableSkeleton } from "#/components/expense-management/expense-table/expense-table-skeleton";
-import { Button } from "#/components/ui/button";
 import {
 	Card,
-	CardAction,
 	CardContent,
 	CardDescription,
 	CardHeader,
@@ -26,9 +23,6 @@ import {
 import { ExpenseFormSheet } from "./expense-form-sheet";
 import { ExpensesEmptyState } from "./expenses-empty-state";
 
-/** `null` = sheet closed, `"new"` = adding, a row = editing that expense. */
-type SheetState = null | "new" | ExpenseRow;
-
 interface IExpensesCard {
 	account: UserAccountRow;
 }
@@ -39,9 +33,9 @@ export function ExpensesCard({ account }: IExpensesCard) {
 	const removeExpense = useRemoveExpense(account.id);
 	const saveExpense = useSaveExpense(account.id);
 	const stopExpense = useStopRecurringExpense(account.id);
-	const [sheet, setSheet] = useState<SheetState>(null);
+	// The expense being edited in the sheet; adding happens from the toolbar.
+	const [editing, setEditing] = useState<ExpenseRow>();
 	const editable = canWrite(account.role);
-	const editing = sheet !== null && sheet !== "new" ? sheet : undefined;
 
 	function handleDelete(expense: ExpenseRow) {
 		removeExpense.mutate(expense.id, {
@@ -114,17 +108,9 @@ export function ExpensesCard({ account }: IExpensesCard) {
 				<CardTitle>{account.name} expenses</CardTitle>
 				<CardDescription>
 					{editable
-						? "Add, edit, and delete the expenses on this account."
+						? "Edit, stop, and delete the expenses on this account."
 						: "You have view-only access to this account."}
 				</CardDescription>
-				{editable && (
-					<CardAction>
-						<Button onClick={() => setSheet("new")}>
-							<Plus />
-							Add expense
-						</Button>
-					</CardAction>
-				)}
 			</CardHeader>
 			<CardContent>
 				{expenses.isPending ? (
@@ -139,7 +125,7 @@ export function ExpensesCard({ account }: IExpensesCard) {
 						currency={account.base_currency}
 						monthTotal={monthTotal}
 						canEdit={editable}
-						onEdit={setSheet}
+						onEdit={setEditing}
 						onDelete={handleDelete}
 						onStop={handleStop}
 					/>
@@ -148,9 +134,9 @@ export function ExpensesCard({ account }: IExpensesCard) {
 
 			<ExpenseFormSheet
 				account={account}
-				open={sheet !== null}
+				open={editing !== undefined}
 				expense={editing}
-				onClose={() => setSheet(null)}
+				onClose={() => setEditing(undefined)}
 			/>
 		</Card>
 	);

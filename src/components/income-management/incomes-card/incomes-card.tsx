@@ -1,13 +1,10 @@
-import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { IncomeTable } from "#/components/income-management/income-table/income-table";
 import { IncomeTableSkeleton } from "#/components/income-management/income-table/income-table-skeleton";
-import { Button } from "#/components/ui/button";
 import {
 	Card,
-	CardAction,
 	CardContent,
 	CardDescription,
 	CardHeader,
@@ -25,9 +22,6 @@ import {
 } from "#/hooks/incomes/use-incomes";
 import { IncomeFormSheet } from "./income-form-sheet";
 import { IncomesEmptyState } from "./incomes-empty-state";
-
-/** `null` = sheet closed, `"new"` = adding, a row = editing that income. */
-type SheetState = null | "new" | IncomeRow;
 
 interface IIncomesCard {
 	account: UserAccountRow;
@@ -51,9 +45,9 @@ export function IncomesCard({ account }: IIncomesCard) {
 	const removeIncome = useRemoveIncome(account.id);
 	const saveIncome = useSaveIncome(account.id);
 	const stopIncome = useStopRecurringIncome(account.id);
-	const [sheet, setSheet] = useState<SheetState>(null);
+	// The income being edited in the sheet; adding happens from the toolbar.
+	const [editing, setEditing] = useState<IncomeRow>();
 	const editable = canWrite(account.role);
-	const editing = sheet !== null && sheet !== "new" ? sheet : undefined;
 
 	function handleDelete(income: IncomeRow) {
 		removeIncome.mutate(income.id, {
@@ -104,17 +98,9 @@ export function IncomesCard({ account }: IIncomesCard) {
 				<CardTitle>{account.name} income</CardTitle>
 				<CardDescription>
 					{editable
-						? "Add, edit, and delete the income on this account."
+						? "Edit, stop, and delete the income on this account."
 						: "You have view-only access to this account."}
 				</CardDescription>
-				{editable && (
-					<CardAction>
-						<Button onClick={() => setSheet("new")}>
-							<Plus />
-							Add income
-						</Button>
-					</CardAction>
-				)}
 			</CardHeader>
 			<CardContent>
 				{incomes.isPending ? (
@@ -129,7 +115,7 @@ export function IncomesCard({ account }: IIncomesCard) {
 						currency={account.base_currency}
 						monthTotal={monthTotal}
 						canEdit={editable}
-						onEdit={setSheet}
+						onEdit={setEditing}
 						onDelete={handleDelete}
 						onStop={handleStop}
 					/>
@@ -138,9 +124,9 @@ export function IncomesCard({ account }: IIncomesCard) {
 
 			<IncomeFormSheet
 				account={account}
-				open={sheet !== null}
+				open={editing !== undefined}
 				income={editing}
-				onClose={() => setSheet(null)}
+				onClose={() => setEditing(undefined)}
 			/>
 		</Card>
 	);
