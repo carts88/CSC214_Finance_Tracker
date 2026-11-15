@@ -2,7 +2,7 @@ import type { Frequency } from "#/database/schemas.recurrence";
 import { getSql } from "#/db";
 
 /**
- * Row shape returned by the expense queries.
+ * Row shape returned by the income queries.
  * - `amount` is whole cents (BIGINT). Neon returns BIGINT as a string, so the
  *   queries cast it to float8 (exact for any realistic cents value) so it
  *   arrives here as a JS number.
@@ -13,32 +13,22 @@ import { getSql } from "#/db";
  *   db/002_recurring.sql.
  */
 export interface IncomeRow {
-    id: string;
-    amount: number;
-    /** The date of a one-off , or the first occurrence of a series. */
-    occurred_on: string;
-    category: string;
-    description: string | null;
-    frequency: Frequency;
-    /** Last date a series can occur on; null for one-offs and open series. */
-    end_date: string | null;
-    /** Next occurrence on or after today, or null if none is left. */
-    next_occurrence: string | null;
-    created_at: string;
-}
-
-/** One dated occurrence of an expense, with series expanded. */
-export interface IncomeOccurrenceRow {
-    id: string;
-    amount: number;
-    occurred_on: string;
-    category: string;
-    description: string | null;
+	id: string;
+	amount: number;
+	/** The date of a one-off income, or the first occurrence of a series. */
+	occurred_on: string;
+	source: string;
+	frequency: Frequency;
+	/** Last date a series can occur on; null for one-offs and open series. */
+	end_date: string | null;
+	/** Next occurrence on or after today, or null if none is left. */
+	next_occurrence: string | null;
+	created_at: string;
 }
 
 /**
  * The SELECT/RETURNING list that produces an `IncomeRow`. Columns are
- * unqualified so it works in both `SELECT ... FROM expenses` and `RETURNING`.
+ * unqualified so it works in both `SELECT ... FROM incomes` and `RETURNING`.
  *
  * next_occurrence: occurrence k is occurred_on + k * step, computed from
  * occurred_on each time so month-end dates don't drift. The generate_series
@@ -47,205 +37,154 @@ export interface IncomeOccurrenceRow {
  * series is empty, and next_occurrence is NULL.
  */
 const INCOME_COLUMNS = `
-    id
-    , amount::float8 AS amount
-    , occurred_on::text AS occurred_on
-    , source
-    , frequency
-    , end_date::text AS end_date
-    , (
-        SELECT min(o.on_date)::text
-        FROM (
-            SELECT (occurred_on + k.n * recurrence_step(frequency))::date AS on_date
-            FROM generate_series(
-                0,
-                (GREATEST(current_date, occurred_on) - occurred_on)
-                    / recurrence_min_days(frequency) + 1
-            ) AS k(n)
-        ) o
-        WHERE o.on_date >= current_date
-            AND (end_date IS NULL OR o.on_date <= end_date)
-    ) AS next_occurrence
-    , created_at
+	id
+	, amount::float8 AS amount
+	, occurred_on::text AS occurred_on
+	, source
+	, frequency
+	, end_date::text AS end_date
+	, (
+		SELECT min(o.on_date)::text
+		FROM (
+			SELECT (occurred_on + k.n * recurrence_step(frequency))::date AS on_date
+			FROM generate_series(
+				0,
+				(GREATEST(current_date, occurred_on) - occurred_on)
+					/ recurrence_min_days(frequency) + 1
+			) AS k(n)
+		) o
+		WHERE o.on_date >= current_date
+			AND (end_date IS NULL OR o.on_date <= end_date)
+	) AS next_occurrence
+	, created_at
 `;
 
 interface IIncomeAccount {
-    accountId: string;
+	accountId: string;
 }
 
 interface IIncomeValues {
-    /** Whole cents, e.g. $12.50 -> 1250. Must be > 0. */
-    amount: number;
-    /** Calendar date as 'YYYY-MM-DD' (first occurrence if repeating). */
-    occurredOn: string;
-    source: string;
-    frequency: Frequency;
-    /** 'YYYY-MM-DD', or null for no end. Only allowed when repeating. */
-    nextOccurrence?: string | null;
-    endDate?: string | null;
+	/** Whole cents, e.g. $12.50 -> 1250. Must be > 0. */
+	amount: number;
+	/** Calendar date as 'YYYY-MM-DD' (first occurrence if repeating). */
+	occurredOn: string;
+	source: string;
+	frequency: Frequency;
+	/** 'YYYY-MM-DD', or null for no end. Only allowed when repeating. */
+	endDate?: string | null;
 }
 
 /**
- * Retrieves all expenses for a given finance account, newest first. A
- * recurring expense comes back as one row for the whole series.
- * @param accountId the finance account these expenses belong to
- * @returns the account's expenses
+ * Retrieves all incomes for a given finance account, newest first. A
+ * recurring income comes back as one row for the whole series.
+ * @param accountId the finance account these incomes belong to
+ * @returns the account's incomes
  */
 export const getUserIncomes = async ({
-    accountId,
+	accountId,
 }: IIncomeAccount): Promise<IncomeRow[]> => {
-    const sql = getSql();
-    return (await sql`
-        SELECT ${sql.unsafe(INCOME_COLUMNS)}
-        FROM incomes
-        WHERE account_id = ${accountId}
-        ORDER BY occurred_on DESC, created_at DESC
-    `) as IncomeRow[];
+	const sql = getSql();
+	return (await sql`
+		SELECT ${sql.unsafe(INCOME_COLUMNS)}
+		FROM incomes
+		WHERE account_id = ${accountId}
+		ORDER BY occurred_on DESC, created_at DESC
+	`) as IncomeRow[];
 };
 
 /**
- * Every dated occurrence of the account's expenses between `from` and `to`
- * (inclusive), with recurring series expanded. Use this for totals and
- * reports; one-offs appear once, series once per occurrence in range.
+ * Creates an income, or updates it when `incomeId` is given and already
+ * exists. An update only applies if the income belongs to `accountId`, so one
+ * account can't overwrite another account's income. Updating a recurring
+ * income changes the whole series.
  *
- * @param accountId the finance account the expenses belong to
- * @param from first date to include, 'YYYY-MM-DD'
- * @param to last date to include, 'YYYY-MM-DD'
- * @returns occurrences ordered by date
- */
-export const getIncomeOccurrences = async ({
-    accountId,
-    from,
-    to,
-}: IIncomeAccount & {
-    from: string;
-    to: string;
-}): Promise<IncomeOccurrenceRow[]> => {
-    const sql = getSql();
-    return (await sql`
-        SELECT
-            e.id
-            , e.amount::float8 AS amount
-            , o.on_date::text AS occurred_on
-            , e.category
-            , e.description
-        FROM expenses e
-        CROSS JOIN LATERAL (
-            -- One-off: its own date.
-            SELECT e.occurred_on AS on_date
-            WHERE e.frequency = 'never'
-            UNION ALL
-            -- Series: every step from occurred_on up to end_date / range end.
-            SELECT (e.occurred_on + k.n * recurrence_step(e.frequency))::date
-            FROM generate_series(
-                0,
-                (LEAST(COALESCE(e.end_date, ${to}::date), ${to}::date) - e.occurred_on)
-                    / recurrence_min_days(e.frequency)
-            ) AS k(n)
-            WHERE e.frequency <> 'never'
-        ) o
-        WHERE e.account_id = ${accountId}
-            AND e.occurred_on <= ${to}::date
-            AND o.on_date BETWEEN ${from}::date AND ${to}::date
-            AND (e.end_date IS NULL OR o.on_date <= e.end_date)
-        ORDER BY o.on_date, e.created_at
-    `) as IncomeOccurrenceRow[];
-};
-
-/**
- * Creates an expense, or updates it when `expenseId` is given and already
- * exists. An update only applies if the expense belongs to `accountId`, so one
- * account can't overwrite another account's expense. Updating a recurring
- * expense changes the whole series.
- *
- * @param accountId the finance account the expense belongs to
- * @param expenseId optional id of an existing expense to update
+ * @param accountId the finance account the income belongs to
+ * @param incomeId optional id of an existing income to update
  * @param amount whole cents
  * @param occurredOn 'YYYY-MM-DD' (first occurrence if repeating)
- * @param category the expense category
- * @param description optional free-text description
+ * @param source where the income came from
  * @param frequency 'never' for a one-off, otherwise how often it repeats
- * @param endDate optional last date a repeating expense can occur on
- * @returns the saved expense, or null if `expenseId` belongs to another account
+ * @param endDate optional last date a repeating income can occur on
+ * @returns the saved income, or null if `incomeId` belongs to another account
  */
 export const upsertUserIncome = async ({
-    accountId,
-    expenseId,
-    amount,
-    occurredOn,
-    source,
-    frequency,
-    endDate = null,
+	accountId,
+	incomeId,
+	amount,
+	occurredOn,
+	source,
+	frequency,
+	endDate = null,
 }: IIncomeAccount &
-    IIncomeValues & { expenseId?: string }): Promise<IncomeRow | null> => {
-    const sql = getSql();
-    const rows = (await sql`
-        INSERT INTO expenses (id, account_id, amount, occurred_on, category, description, frequency, end_date)
-        VALUES (
-            COALESCE(${expenseId ?? null}::uuid, gen_random_uuid())
-            , ${accountId}
-            , ${amount}
-            , ${occurredOn}::date
-        , ${source}
-            , ${frequency}::recurrence_frequency
-            , ${endDate}::date
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            amount = EXCLUDED.amount
-            , occurred_on = EXCLUDED.occurred_on
-            , source = EXCLUDED.source
-            , frequency = EXCLUDED.frequency
-            , end_date = EXCLUDED.end_date
-        WHERE expenses.account_id = EXCLUDED.account_id
-        RETURNING ${sql.unsafe(INCOME_COLUMNS)}
-    `) as IncomeRow[];
-    return rows[0] ?? null;
+	IIncomeValues & { incomeId?: string }): Promise<IncomeRow | null> => {
+	const sql = getSql();
+	const rows = (await sql`
+		INSERT INTO incomes (id, account_id, amount, occurred_on, source, frequency, end_date)
+		VALUES (
+			COALESCE(${incomeId ?? null}::uuid, gen_random_uuid())
+			, ${accountId}
+			, ${amount}
+			, ${occurredOn}::date
+			, ${source}
+			, ${frequency}::recurrence_frequency
+			, ${endDate}::date
+		)
+		ON CONFLICT (id) DO UPDATE SET
+			amount = EXCLUDED.amount
+			, occurred_on = EXCLUDED.occurred_on
+			, source = EXCLUDED.source
+			, frequency = EXCLUDED.frequency
+			, end_date = EXCLUDED.end_date
+		WHERE incomes.account_id = EXCLUDED.account_id
+		RETURNING ${sql.unsafe(INCOME_COLUMNS)}
+	`) as IncomeRow[];
+	return rows[0] ?? null;
 };
 
 /**
- * Stops a recurring expense: sets its end date to today (or its start date if
+ * Stops a recurring income: sets its end date to today (or its start date if
  * it hasn't started yet), so today's occurrence is the last one. Past
  * occurrences are kept.
  *
- * @param accountId the finance account the expense belongs to
- * @param expenseId the recurring expense to stop
- * @returns the updated expense, or null if it isn't an active recurring
- *   expense on this account
+ * @param accountId the finance account the income belongs to
+ * @param incomeId the recurring income to stop
+ * @returns the updated income, or null if it isn't an active recurring
+ *   income on this account
  */
-export const endRecurringIncome = async ({
-    accountId,
-    expenseId,
-}: IIncomeAccount & { expenseId: string }): Promise<IncomeRow | null> => {
-    const sql = getSql();
-    const rows = (await sql`
-        UPDATE expenses
-        SET end_date = GREATEST(occurred_on, current_date)
-        WHERE account_id = ${accountId}
-            AND id = ${expenseId}
-            AND frequency <> 'never'
-            AND (end_date IS NULL OR end_date > current_date)
-        RETURNING ${sql.unsafe(INCOME_COLUMNS)}
-    `) as IncomeRow[];
-    return rows[0] ?? null;
+export const stopRecurringIncome = async ({
+	accountId,
+	incomeId,
+}: IIncomeAccount & { incomeId: string }): Promise<IncomeRow | null> => {
+	const sql = getSql();
+	const rows = (await sql`
+		UPDATE incomes
+		SET end_date = GREATEST(occurred_on, current_date)
+		WHERE account_id = ${accountId}
+			AND id = ${incomeId}
+			AND frequency <> 'never'
+			AND (end_date IS NULL OR end_date > current_date)
+		RETURNING ${sql.unsafe(INCOME_COLUMNS)}
+	`) as IncomeRow[];
+	return rows[0] ?? null;
 };
 
 /**
- * Deletes an expense from a given finance account. Deleting a recurring
- * expense removes the whole series.
+ * Deletes an income from a given finance account. Deleting a recurring
+ * income removes the whole series.
  *
- * @param accountId the finance account the expense belongs to
- * @param expenseId the expense to delete
- * @returns the deleted expense, or null if it didn't exist on this account
+ * @param accountId the finance account the income belongs to
+ * @param incomeId the income to delete
+ * @returns the deleted income, or null if it didn't exist on this account
  */
 export const removeUserIncome = async ({
-    accountId,
-    expenseId,
-}: IIncomeAccount & { expenseId: string }): Promise<IncomeRow | null> => {
-    const sql = getSql();
-    const rows = (await sql`
-        DELETE FROM incomes
-        WHERE account_id = ${accountId} AND id = ${expenseId}
-        RETURNING ${sql.unsafe(INCOME_COLUMNS)}
-    `) as IncomeRow[];
-    return rows[0] ?? null;
+	accountId,
+	incomeId,
+}: IIncomeAccount & { incomeId: string }): Promise<IncomeRow | null> => {
+	const sql = getSql();
+	const rows = (await sql`
+		DELETE FROM incomes
+		WHERE account_id = ${accountId} AND id = ${incomeId}
+		RETURNING ${sql.unsafe(INCOME_COLUMNS)}
+	`) as IncomeRow[];
+	return rows[0] ?? null;
 };

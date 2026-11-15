@@ -5,6 +5,8 @@ import { AccountPicker } from "#/components/accounts/account-picker";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { ExpensesCard } from "#/components/expense-management/expenses-card/expenses-card";
 import { ExpensesCardSkeleton } from "#/components/expense-management/expenses-card/expenses-card-skeleton";
+import { IncomesCard } from "#/components/income-management/incomes-card/incomes-card";
+import { IncomesCardSkeleton } from "#/components/income-management/incomes-card/incomes-card-skeleton";
 import { useMyAccounts } from "#/hooks/accounts/use-my-accounts";
 import { authClient } from "#/lib/auth-client";
 
@@ -54,10 +56,16 @@ function ExpenseManagementPage() {
 					error={accounts.error}
 				/>
 			) : account ? (
-				// Remount per account so the open sheet and form reset on switch.
-				<ExpensesCard key={account.id} account={account} />
+				// Remount per account so the open sheets and forms reset on switch.
+				<div key={account.id} className="flex flex-col gap-6">
+					<IncomesCard account={account} />
+					<ExpensesCard account={account} />
+				</div>
 			) : (
-				<ExpensesCardSkeleton />
+				<>
+					<IncomesCardSkeleton />
+					<ExpensesCardSkeleton />
+				</>
 			)}
 		</div>
 	);
