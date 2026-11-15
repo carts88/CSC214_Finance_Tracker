@@ -11,6 +11,7 @@ import type { ComponentProps } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '#/components/auth/auth-provider'
 import { AppSidebar } from '#/components/navigation/app-sidebar'
+import { HEADER_ACTIONS_ID } from '#/components/navigation/header-actions'
 import { NAV_ITEMS } from '#/components/navigation/navigation-config'
 import { Separator } from '#/components/ui/separator'
 import {
@@ -103,6 +104,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                         className="mr-2 data-[orientation=vertical]:h-4"
                       />
                       <span className="text-sm font-medium">{pageTitle}</span>
+                      {/* Pages fill this via <HeaderActions>. */}
+                      <div
+                        id={HEADER_ACTIONS_ID}
+                        className="ml-auto flex items-center gap-2"
+                      />
                     </header>
                     <div className="flex-1">{children}</div>
                   </SidebarInset>

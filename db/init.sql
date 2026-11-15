@@ -99,6 +99,8 @@ CREATE INDEX expenses_account_date_idx ON expenses (account_id, occurred_on);
 
 -- Also holds other recurring charges (utilities, food budget): the diagram's
 -- "recurring charges" association points here.
+-- SUPERSEDED by 002_recurring.sql: subscriptions are folded into expenses
+-- (frequency/end_date columns) and this table is dropped.
 CREATE TABLE subscriptions (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id   UUID NOT NULL REFERENCES finance_accounts(id) ON DELETE CASCADE,

@@ -1,11 +1,19 @@
 import { z } from "zod";
+import {
+	recurrenceFields,
+	refineRecurrence,
+} from "#/database/schemas.recurrence";
 
 /**
  * The editable fields of an expense. Shared by the expense form (client-side
  * validation) and `addExpenseFn` (server-side validation) so the two can't
  * drift apart.
+ *
+ * A repeating expense (frequency other than 'never') is one row standing for
+ * the whole series: it recurs from `occurredOn` until `endDate`, or forever.
  */
-export const expenseValuesSchema = z.object({
+export const expenseValuesSchema = refineRecurrence(
+	z.object({
 	/** Whole cents, e.g. $12.50 -> 1250. */
 	amount: z
 		.number()
@@ -25,7 +33,9 @@ export const expenseValuesSchema = z.object({
 		.max(500, "Keep the description under 500 characters")
 		.nullish()
 		.transform((value) => value || null),
-});
+		...recurrenceFields,
+	}),
+);
 
 export type ExpenseValues = z.input<typeof expenseValuesSchema>;
 
@@ -40,6 +50,7 @@ export const EXPENSE_CATEGORIES = [
 	"Insurance",
 	"Entertainment",
 	"Shopping",
+	"Subscriptions",
 	"Education",
 	"Travel",
 	"Other",
