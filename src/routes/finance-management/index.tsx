@@ -1,6 +1,6 @@
 import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
 import { AddTransactionButtons } from "#/components/common/add-transaction-buttons";
 import { ErrorAlert } from "#/components/common/error-alert";
@@ -66,22 +66,6 @@ function ExpenseManagementPage() {
 				</HeaderActions>
 			)}
 
-			{account && (
-				// Keyed per account so a half-filled form resets on switch.
-				<Fragment key={account.id}>
-					<IncomeFormSheet
-						account={account}
-						open={adding === "income"}
-						onClose={() => setAdding(null)}
-					/>
-					<ExpenseFormSheet
-						account={account}
-						open={adding === "expense"}
-						onClose={() => setAdding(null)}
-					/>
-				</Fragment>
-			)}
-
 			{accounts.isError ? (
 				<ErrorAlert
 					title="Couldn't load your accounts"
@@ -92,6 +76,18 @@ function ExpenseManagementPage() {
 				<div key={account.id} className="flex flex-col gap-6">
 					<IncomesCard account={account} />
 					<ExpensesCard account={account} />
+
+					{/* "Add" sheets opened from the toolbar (they render as overlays). */}
+					<IncomeFormSheet
+						account={account}
+						open={adding === "income"}
+						onClose={() => setAdding(null)}
+					/>
+					<ExpenseFormSheet
+						account={account}
+						open={adding === "expense"}
+						onClose={() => setAdding(null)}
+					/>
 				</div>
 			) : (
 				<>
