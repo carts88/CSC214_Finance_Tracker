@@ -10,6 +10,7 @@ import type { ExpenseValues } from "#/database/expenses/schemas.expenses";
 import { addExpenseFn } from "#/database/expenses/server-fn/add-expense";
 import { getExpensesFn } from "#/database/expenses/server-fn/get-expenses";
 import { removeExpenseFn } from "#/database/expenses/server-fn/remove-expense";
+import { removeExpensesFn } from "#/database/expenses/server-fn/remove-expenses";
 import { stopRecurringExpenseFn } from "#/database/expenses/server-fn/stop-recurring-expense";
 import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
 import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
@@ -82,6 +83,16 @@ export function useRemoveExpense(accountId: string) {
 	return useMutation({
 		mutationFn: (expenseId: string) =>
 			removeExpenseFn({ data: { accountId, expenseId } }), // calls the server function to remove the expense
+		onSettled: () => invalidateExpenses(queryClient, accountId),
+	});
+}
+
+/** Deletes several expenses at once, then refetches. */
+export function useRemoveExpenses(accountId: string) {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (expenseIds: string[]) =>
+			removeExpensesFn({ data: { accountId, expenseIds } }),
 		onSettled: () => invalidateExpenses(queryClient, accountId),
 	});
 }

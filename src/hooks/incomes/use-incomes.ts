@@ -10,6 +10,7 @@ import type { IncomeValues } from "#/database/incomes/schemas.incomes";
 import { addIncomeFn } from "#/database/incomes/server-fn/add-income";
 import { getIncomesFn } from "#/database/incomes/server-fn/get-incomes";
 import { removeIncomeFn } from "#/database/incomes/server-fn/remove-income";
+import { removeIncomesFn } from "#/database/incomes/server-fn/remove-incomes";
 import { stopRecurringIncomeFn } from "#/database/incomes/server-fn/stop-recurring-income";
 import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
 import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
@@ -82,6 +83,16 @@ export function useRemoveIncome(accountId: string) {
 	return useMutation({
 		mutationFn: (incomeId: string) =>
 			removeIncomeFn({ data: { accountId, incomeId } }),
+		onSettled: () => invalidateIncomes(queryClient, accountId),
+	});
+}
+
+/** Deletes several incomes at once, then refetches. */
+export function useRemoveIncomes(accountId: string) {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (incomeIds: string[]) =>
+			removeIncomesFn({ data: { accountId, incomeIds } }),
 		onSettled: () => invalidateIncomes(queryClient, accountId),
 	});
 }

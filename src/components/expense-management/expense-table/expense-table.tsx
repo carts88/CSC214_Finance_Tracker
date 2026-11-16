@@ -1,5 +1,6 @@
 import { CircleStop, Pencil, Repeat, Trash2 } from "lucide-react";
 import { Button } from "#/components/ui/button";
+import { Checkbox } from "#/components/ui/checkbox";
 import {
 	Table,
 	TableBody,
@@ -28,6 +29,9 @@ interface IExpenseTable {
 	onEdit: (expense: ExpenseRow) => void;
 	onDelete: (expense: ExpenseRow) => void;
 	onStop: (expense: ExpenseRow) => void;
+	/** Ids of the checked rows. Only used when `canEdit` is true. */
+	selected: ReadonlySet<string>;
+	onSelectedChange: (selected: Set<string>) => void;
 }
 
 /** "Monthly · next Dec 1, 2026", "Weekly · ended Nov 14, 2026", or "—". */
@@ -60,6 +64,8 @@ export const ExpenseTable = ({
 	onEdit,
 	onDelete,
 	onStop,
+	selected,
+	onSelectedChange,
 }: IExpenseTable) => {
 	const money = new Intl.NumberFormat(undefined, {
 		style: "currency",
@@ -70,10 +76,38 @@ export const ExpenseTable = ({
 	const asNegative = (cents: number) =>
 		money.format(cents === 0 ? 0 : -cents / 100);
 
+	const selectedCount = expenses.filter((r) => selected.has(r.id)).length;
+	const allChecked =
+		selectedCount === 0
+			? false
+			: selectedCount === expenses.length
+				? true
+				: "indeterminate";
+
+	function toggleAll(checked: boolean) {
+		onSelectedChange(checked ? new Set(expenses.map((r) => r.id)) : new Set());
+	}
+
+	function toggleRow(id: string, checked: boolean) {
+		const next = new Set(selected);
+		if (checked) next.add(id);
+		else next.delete(id);
+		onSelectedChange(next);
+	}
+
 	return (
 		<Table>
 			<TableHeader>
 				<TableRow>
+					{canEdit && (
+						<TableHead className="w-8">
+							<Checkbox
+								checked={allChecked}
+								onCheckedChange={(checked) => toggleAll(checked === true)}
+								aria-label="Select all rows"
+							/>
+						</TableHead>
+					)}
 					<TableHead>Date</TableHead>
 					<TableHead>Category</TableHead>
 					<TableHead>Description</TableHead>
@@ -91,8 +125,23 @@ export const ExpenseTable = ({
 					// Still has occurrences ahead of it (or hasn't started yet).
 					const isActiveSeries =
 						nextOccurrence(expense) !== null;
+					const isSelected = canEdit && selected.has(expense.id);
 					return (
-						<TableRow key={expense.id}>
+						<TableRow
+							key={expense.id}
+							data-state={isSelected ? "selected" : undefined}
+						>
+							{canEdit && (
+								<TableCell>
+									<Checkbox
+										checked={isSelected}
+										onCheckedChange={(checked) =>
+											toggleRow(expense.id, checked === true)
+										}
+										aria-label={`Select ${expense.category} expense`}
+									/>
+								</TableCell>
+							)}
 							<TableCell className="whitespace-nowrap">
 								{formatDate(expense.occurred_on)}
 							</TableCell>
@@ -145,7 +194,7 @@ export const ExpenseTable = ({
 			</TableBody>
 			<TableFooter>
 				<TableRow>
-					<TableCell colSpan={4}>This month</TableCell>
+					<TableCell colSpan={canEdit ? 5 : 4}>This month</TableCell>
 					<TableCell className="text-right tabular-nums">
 						{monthTotal === undefined ? "…" : asNegative(monthTotal)}
 					</TableCell>

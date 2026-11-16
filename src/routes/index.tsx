@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
 import { AddTransactionButtons } from "#/components/common/add-transaction-buttons";
+import { DeleteSelectedButton } from "#/components/common/delete-selected-button";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { StatCard } from "#/components/common/stats/stat-card";
 import { StatGrid } from "#/components/common/stats/stat-grid";
@@ -18,6 +19,7 @@ import { IncomesCardSkeleton } from "#/components/income-management/incomes-card
 import { HeaderActions } from "#/components/navigation/header-actions";
 import { canWrite } from "#/database/accounts/roles";
 import { useMyAccounts } from "#/hooks/accounts/use-my-accounts";
+import { useTransactionSelection } from "#/hooks/use-transaction-selection";
 import { authClient } from "#/lib/auth-client";
 
 export const Route = createFileRoute("/")({ component: Dashboard });
@@ -37,6 +39,13 @@ function Dashboard() {
 	const [selectedId, setSelectedId] = useState<string>();
 	/** Which "add" sheet the toolbar buttons opened, if any. */
 	const [adding, setAdding] = useState<"income" | "expense" | null>(null);
+	/** Rows checked in each table; deleted together from the toolbar. */
+	const selection = useTransactionSelection();
+
+	function switchAccount(id: string) {
+		setSelectedId(id);
+		selection.clear();
+	}
 	const account =
 		accounts.data?.find((a) => a.id === selectedId) ?? accounts.data?.[0];
 
@@ -50,13 +59,19 @@ function Dashboard() {
 					<AccountPicker
 						accounts={accounts.data}
 						value={account.id}
-						onChange={setSelectedId}
+						onChange={switchAccount}
 					/>
 				)}
 			</div>
 
 			{account && canWrite(account.role) && (
 				<HeaderActions>
+					<DeleteSelectedButton
+						account={account}
+						selectedIncomes={selection.incomes}
+						selectedExpenses={selection.expenses}
+						onDeleted={selection.clear}
+					/>
 					<AddTransactionButtons
 						onAddIncome={() => setAdding("income")}
 						onAddExpense={() => setAdding("expense")}
@@ -87,8 +102,16 @@ function Dashboard() {
 							<SubscriptionsCard account={account} />
 						</aside>
 						<div className="flex min-w-0 flex-col gap-6 lg:col-span-2 lg:col-start-2 lg:row-start-1">
-							<IncomesCard account={account} />
-							<ExpensesCard account={account} />
+							<IncomesCard
+								account={account}
+								selected={selection.incomes}
+								onSelectedChange={selection.setIncomes}
+							/>
+							<ExpensesCard
+								account={account}
+								selected={selection.expenses}
+								onSelectedChange={selection.setExpenses}
+							/>
 						</div>
 					</div>
 
