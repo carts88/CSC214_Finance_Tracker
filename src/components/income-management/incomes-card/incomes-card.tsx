@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { IncomeTable } from "#/components/income-management/income-table/income-table";
 import { IncomeTableSkeleton } from "#/components/income-management/income-table/income-table-skeleton";
+import { incomeRestoreValues } from "#/components/income-management/utils/income.utils";
 import {
 	Card,
 	CardContent,
@@ -25,21 +26,16 @@ import { IncomesEmptyState } from "./incomes-empty-state";
 
 interface IIncomesCard {
 	account: UserAccountRow;
+	/** Ids of the checked rows; the page deletes them from the top toolbar. */
+	selected: ReadonlySet<string>;
+	onSelectedChange: (selected: Set<string>) => void;
 }
 
-/** The values that re-save `income` exactly as it was (used by Undo). */
-function restoreValues(income: IncomeRow) {
-	return {
-		incomeId: income.id,
-		amount: income.amount,
-		occurredOn: income.occurred_on,
-		source: income.source,
-		frequency: income.frequency,
-		endDate: income.end_date,
-	};
-}
-
-export function IncomesCard({ account }: IIncomesCard) {
+export function IncomesCard({
+	account,
+	selected,
+	onSelectedChange,
+}: IIncomesCard) {
 	const incomes = useIncomes(account.id);
 	const monthTotal = useIncomeMonthTotal(account.id);
 	const removeIncome = useRemoveIncome(account.id);
@@ -57,7 +53,7 @@ export function IncomesCard({ account }: IIncomesCard) {
 						label: "Undo",
 						// Re-saving with the same id puts the row back.
 						onClick: () =>
-							saveIncome.mutate(restoreValues(income), {
+							saveIncome.mutate(incomeRestoreValues(income), {
 								onError: () => toast.error("Couldn't restore the income"),
 							}),
 					},
@@ -80,7 +76,7 @@ export function IncomesCard({ account }: IIncomesCard) {
 						label: "Undo",
 						// Re-saving with the original end date resumes the series.
 						onClick: () =>
-							saveIncome.mutate(restoreValues(income), {
+							saveIncome.mutate(incomeRestoreValues(income), {
 								onError: () => toast.error("Couldn't resume the income"),
 							}),
 					},
@@ -118,6 +114,8 @@ export function IncomesCard({ account }: IIncomesCard) {
 						onEdit={setEditing}
 						onDelete={handleDelete}
 						onStop={handleStop}
+						selected={selected}
+						onSelectedChange={onSelectedChange}
 					/>
 				)}
 			</CardContent>

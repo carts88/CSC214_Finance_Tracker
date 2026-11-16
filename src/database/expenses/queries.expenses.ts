@@ -46,7 +46,7 @@ export interface ExpenseOccurrenceRow {
  * occurrence >= today is always included. For 'never' the bound is NULL, the
  * series is empty, and next_occurrence is NULL.
  */
-const EXPENSE_COLUMNS = `
+export const EXPENSE_COLUMNS = `
 	id
 	, amount::float8 AS amount
 	, occurred_on::text AS occurred_on
@@ -203,4 +203,24 @@ export const removeUserExpense = async ({
 		RETURNING ${sql.unsafe(EXPENSE_COLUMNS)}
 	`) as ExpenseRow[];
 	return rows[0] ?? null;
+};
+
+/**
+ * Deletes several expenses from a given finance account in one statement.
+ * Ids that don't exist on this account are skipped.
+ *
+ * @param accountId the finance account the expenses belong to
+ * @param expenseIds the expenses to delete
+ * @returns the deleted expenses
+ */
+export const removeUserExpenses = async ({
+	accountId,
+	expenseIds,
+}: IExpenseAccount & { expenseIds: string[] }): Promise<ExpenseRow[]> => {
+	const sql = getSql();
+	return (await sql`
+		DELETE FROM expenses
+		WHERE account_id = ${accountId} AND id = ANY(${expenseIds}::uuid[])
+		RETURNING ${sql.unsafe(EXPENSE_COLUMNS)}
+	`) as ExpenseRow[];
 };

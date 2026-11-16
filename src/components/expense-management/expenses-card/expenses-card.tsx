@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { ExpenseTable } from "#/components/expense-management/expense-table/expense-table";
 import { ExpenseTableSkeleton } from "#/components/expense-management/expense-table/expense-table-skeleton";
+import { expenseRestoreValues } from "#/components/expense-management/utils/expense.utils";
 import {
 	Card,
 	CardContent,
@@ -25,9 +26,16 @@ import { ExpensesEmptyState } from "./expenses-empty-state";
 
 interface IExpensesCard {
 	account: UserAccountRow;
+	/** Ids of the checked rows; the page deletes them from the top toolbar. */
+	selected: ReadonlySet<string>;
+	onSelectedChange: (selected: Set<string>) => void;
 }
 
-export function ExpensesCard({ account }: IExpensesCard) {
+export function ExpensesCard({
+	account,
+	selected,
+	onSelectedChange,
+}: IExpensesCard) {
 	const expenses = useExpenses(account.id);
 	const monthTotal = useMonthTotal(account.id);
 	const removeExpense = useRemoveExpense(account.id);
@@ -46,15 +54,7 @@ export function ExpensesCard({ account }: IExpensesCard) {
 						// Re-saving with the same id puts the row back.
 						onClick: () =>
 							saveExpense.mutate(
-								{
-									expenseId: expense.id,
-									amount: expense.amount,
-									occurredOn: expense.occurred_on,
-									category: expense.category,
-									description: expense.description,
-									frequency: expense.frequency,
-									endDate: expense.end_date,
-								},
+								expenseRestoreValues(expense),
 								{
 									onError: () => toast.error("Couldn't restore the expense"),
 								},
@@ -80,15 +80,7 @@ export function ExpensesCard({ account }: IExpensesCard) {
 						// Re-saving with the original end date resumes the series.
 						onClick: () =>
 							saveExpense.mutate(
-								{
-									expenseId: expense.id,
-									amount: expense.amount,
-									occurredOn: expense.occurred_on,
-									category: expense.category,
-									description: expense.description,
-									frequency: expense.frequency,
-									endDate: expense.end_date,
-								},
+								expenseRestoreValues(expense),
 								{
 									onError: () => toast.error("Couldn't resume the expense"),
 								},
@@ -128,6 +120,8 @@ export function ExpensesCard({ account }: IExpensesCard) {
 						onEdit={setEditing}
 						onDelete={handleDelete}
 						onStop={handleStop}
+						selected={selected}
+						onSelectedChange={onSelectedChange}
 					/>
 				)}
 			</CardContent>

@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
 import { AddTransactionButtons } from "#/components/common/add-transaction-buttons";
+import { DeleteSelectedButton } from "#/components/common/delete-selected-button";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { ExpenseFormSheet } from "#/components/expense-management/expenses-card/expense-form-sheet";
 import { ExpensesCard } from "#/components/expense-management/expenses-card/expenses-card";
@@ -13,6 +14,7 @@ import { IncomesCardSkeleton } from "#/components/income-management/incomes-card
 import { HeaderActions } from "#/components/navigation/header-actions";
 import { canWrite } from "#/database/accounts/roles";
 import { useMyAccounts } from "#/hooks/accounts/use-my-accounts";
+import { useTransactionSelection } from "#/hooks/use-transaction-selection";
 import { authClient } from "#/lib/auth-client";
 
 
@@ -36,6 +38,13 @@ function ExpenseManagementPage() {
 	const [selectedId, setSelectedId] = useState<string>();
 	/** Which "add" sheet the toolbar buttons opened, if any. */
 	const [adding, setAdding] = useState<"income" | "expense" | null>(null);
+	/** Rows checked in each table; deleted together from the toolbar. */
+	const selection = useTransactionSelection();
+
+	function switchAccount(id: string) {
+		setSelectedId(id);
+		selection.clear();
+	}
 	const account =
 		accounts.data?.find((a) => a.id === selectedId) ?? accounts.data?.[0];
 
@@ -51,7 +60,7 @@ function ExpenseManagementPage() {
 					<AccountPicker
 						accounts={accounts.data}
 						value={account.id}
-						onChange={setSelectedId}
+						onChange={switchAccount}
 					/>
 				)}
 				
@@ -59,6 +68,12 @@ function ExpenseManagementPage() {
 
 			{account && canWrite(account.role) && (
 				<HeaderActions>
+					<DeleteSelectedButton
+						account={account}
+						selectedIncomes={selection.incomes}
+						selectedExpenses={selection.expenses}
+						onDeleted={selection.clear}
+					/>
 					<AddTransactionButtons
 						onAddIncome={() => setAdding("income")}
 						onAddExpense={() => setAdding("expense")}
@@ -74,8 +89,16 @@ function ExpenseManagementPage() {
 			) : account ? (
 				// Remount per account so the open sheets and forms reset on switch.
 				<div key={account.id} className="flex flex-col gap-6">
-					<IncomesCard account={account} />
-					<ExpensesCard account={account} />
+					<IncomesCard
+						account={account}
+						selected={selection.incomes}
+						onSelectedChange={selection.setIncomes}
+					/>
+					<ExpensesCard
+						account={account}
+						selected={selection.expenses}
+						onSelectedChange={selection.setExpenses}
+					/>
 
 					{/* "Add" sheets opened from the toolbar (they render as overlays). */}
 					<IncomeFormSheet

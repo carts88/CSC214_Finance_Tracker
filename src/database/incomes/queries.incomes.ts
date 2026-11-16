@@ -188,3 +188,23 @@ export const removeUserIncome = async ({
 	`) as IncomeRow[];
 	return rows[0] ?? null;
 };
+
+/**
+ * Deletes several incomes from a given finance account in one statement.
+ * Ids that don't exist on this account are skipped.
+ *
+ * @param accountId the finance account the incomes belong to
+ * @param incomeIds the incomes to delete
+ * @returns the deleted incomes
+ */
+export const removeUserIncomes = async ({
+	accountId,
+	incomeIds,
+}: IIncomeAccount & { incomeIds: string[] }): Promise<IncomeRow[]> => {
+	const sql = getSql();
+	return (await sql`
+		DELETE FROM incomes
+		WHERE account_id = ${accountId} AND id = ANY(${incomeIds}::uuid[])
+		RETURNING ${sql.unsafe(INCOME_COLUMNS)}
+	`) as IncomeRow[];
+};
