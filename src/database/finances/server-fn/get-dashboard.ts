@@ -9,7 +9,8 @@ const getDashboardInput = z.object({
 });
 
 /**
- * Returns the dashboard summary, active subscriptions, and upcoming expenses
+ * Returns the dashboard summary, active subscriptions, and upcoming
+ * incomes and expenses
  * for a finance account. Any active member of the account (including viewers)
  * can read.
  */

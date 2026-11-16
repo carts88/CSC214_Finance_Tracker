@@ -7,7 +7,7 @@ export const dashboardKeys = {
 
 /**
  * Dashboard data for a finance account: summary totals, active subscriptions,
- * and upcoming expenses. Idle until `accountId` is set. Income and expense
+ * and upcoming incomes and expenses. Idle until `accountId` is set. Income and expense
  * mutations invalidate this, so it stays in sync with edits.
  */
 export function useDashboard(accountId: string | undefined) {

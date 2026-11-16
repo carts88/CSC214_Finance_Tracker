@@ -8,7 +8,8 @@ import { ErrorAlert } from "#/components/common/error-alert";
 import { StatCard } from "#/components/common/stats/stat-card";
 import { StatGrid } from "#/components/common/stats/stat-grid";
 import { DashboardStats } from "#/components/dashboard/dashboard-stats";
-import { ScheduledExpensesCard } from "#/components/dashboard/scheduled-expenses-card/scheduled-expenses-card";
+import { ScheduledCard } from "#/components/dashboard/scheduled-card/scheduled-card";
+import { ScheduledNetCard } from "#/components/dashboard/scheduled-net-card/scheduled-net-card";
 import { SubscriptionsCard } from "#/components/dashboard/subscriptions-card/subscriptions-card";
 import { ExpenseFormSheet } from "#/components/expense-management/expenses-card/expense-form-sheet";
 import { ExpensesCard } from "#/components/expense-management/expenses-card/expenses-card";
@@ -98,10 +99,12 @@ function Dashboard() {
 					 */}
 					<div className="grid items-start gap-6 lg:grid-cols-3 lg:gap-x-4">
 						<aside className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
-							<ScheduledExpensesCard account={account} />
-							<SubscriptionsCard account={account} />
+							<ScheduledNetCard account={account} />
+							<ScheduledCard account={account} kind="expense" />
+							<ScheduledCard account={account} kind="income" />
 						</aside>
 						<div className="flex min-w-0 flex-col gap-6 lg:col-span-2 lg:col-start-2 lg:row-start-1">
+							<SubscriptionsCard account={account} />
 							<IncomesCard
 								account={account}
 								selected={selection.incomes}

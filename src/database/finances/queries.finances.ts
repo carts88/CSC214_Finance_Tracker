@@ -4,6 +4,7 @@ import {
 } from "#/database/expenses/queries.expenses";
 import {
 	SCHEDULE_WINDOWS,
+	type ScheduleKind,
 	type ScheduleWindowKey,
 	scheduleWindowKey,
 	UPCOMING_DAYS,
@@ -54,16 +55,18 @@ const MONTHLY_FACTOR = `
 `;
 
 /**
- * `next_7_days, next_30_days, ...` columns: the total of expense occurrences
- * from today up to (not including) today + N days. Built from numeric
- * constants only, so `sql.unsafe` is safe here.
+ * `<kind>_next_7_days, <kind>_next_30_days, ...` columns: the total of
+ * occurrences from today up to (not including) today + N days. Built from
+ * numeric constants and a closed union only, so `sql.unsafe` is safe here.
  */
-const SCHEDULE_WINDOW_COLUMNS = SCHEDULE_WINDOWS.map(
-	(days) => `
+function scheduleWindowColumns(kind: ScheduleKind): string {
+	return SCHEDULE_WINDOWS.map(
+		(days) => `
 		COALESCE(SUM(amount) FILTER (
 			WHERE on_date >= current_date AND on_date < current_date + ${days}
-		), 0)::float8 AS ${scheduleWindowKey(days)}`,
-).join(",");
+		), 0)::float8 AS ${scheduleWindowKey(kind, days)}`,
+	).join(",");
+}
 
 /**
  * Every dated occurrence of an account's incomes or expenses up to and
@@ -126,8 +129,9 @@ function activeSubscriptions(accountId: string): SqlFragment {
 }
 
 /**
- * One row of account totals. Also has a `next_N_days` column per
- * SCHEDULE_WINDOWS entry: expenses due from today up to today + N days.
+ * One row of account totals. Also has `income_next_N_days` and
+ * `expense_next_N_days` columns per SCHEDULE_WINDOWS entry: what's scheduled
+ * from today up to today + N days.
  */
 export interface DashboardSummaryRow extends Record<ScheduleWindowKey, number> {
 	/** Every income occurrence up to and including today. */
@@ -150,12 +154,14 @@ export interface SubscriptionRow extends ExpenseRow {
 	monthly_cost: number;
 }
 
-/** One upcoming occurrence of an expense (series expanded). */
-export interface UpcomingExpenseRow {
-	/** The expense row this occurrence comes from (not unique per row). */
+/** One upcoming occurrence of an income or expense (series expanded). */
+export interface UpcomingRow {
+	/** The income/expense row this comes from (not unique per occurrence). */
 	id: string;
 	on_date: string;
-	category: string;
+	/** An expense's category or an income's source. */
+	label: string;
+	/** An expense's description; always null for incomes. */
 	description: string | null;
 	frequency: Frequency;
 	amount: number;
@@ -178,6 +184,7 @@ function summaryQuery(accountId: string): SqlFragment {
 				, COALESCE(SUM(amount) FILTER (
 					WHERE on_date BETWEEN ${sql.unsafe(MONTH_START)} AND ${sql.unsafe(MONTH_END)}
 				), 0) AS this_month
+				, ${sql.unsafe(scheduleWindowColumns("income"))}
 			FROM inc
 		)
 		, exp_totals AS (
@@ -186,7 +193,7 @@ function summaryQuery(accountId: string): SqlFragment {
 				, COALESCE(SUM(amount) FILTER (
 					WHERE on_date BETWEEN ${sql.unsafe(MONTH_START)} AND ${sql.unsafe(MONTH_END)}
 				), 0) AS this_month
-				, ${sql.unsafe(SCHEDULE_WINDOW_COLUMNS)}
+				, ${sql.unsafe(scheduleWindowColumns("expense"))}
 			FROM exp
 		)
 		, subs AS (
@@ -201,7 +208,8 @@ function summaryQuery(accountId: string): SqlFragment {
 			, e.to_date::float8 AS expense_to_date
 			, e.this_month::float8 AS expense_this_month
 			, (i.to_date - e.to_date)::float8 AS total_money
-			, ${sql.unsafe(SCHEDULE_WINDOWS.map((d) => `e.${scheduleWindowKey(d)}`).join(", "))}
+			, ${sql.unsafe(SCHEDULE_WINDOWS.map((d) => `i.${scheduleWindowKey("income", d)}`).join(", "))}
+			, ${sql.unsafe(SCHEDULE_WINDOWS.map((d) => `e.${scheduleWindowKey("expense", d)}`).join(", "))}
 			, s.n AS subscription_count
 			, s.monthly_total AS subscription_monthly_total
 		FROM inc_totals i, exp_totals e, subs s
@@ -217,21 +225,27 @@ function subscriptionsQuery(accountId: string): SqlFragment {
 	`;
 }
 
-function upcomingExpensesQuery(accountId: string): SqlFragment {
+/** `label`/`description` columns for an UpcomingRow, per table. */
+const UPCOMING_LABEL_COLUMNS: Record<RecurringTable, string> = {
+	expenses: "category AS label, description",
+	incomes: "source AS label, NULL::text AS description",
+};
+
+/** Occurrences from today through UPCOMING_DAYS ahead, soonest first. */
+function upcomingQuery(table: RecurringTable, accountId: string): SqlFragment {
 	const sql = getSql();
 	return sql`
 		SELECT
 			id
 			, on_date::text AS on_date
-			, category
-			, description
+			, ${sql.unsafe(UPCOMING_LABEL_COLUMNS[table])}
 			, frequency
 			, amount::float8 AS amount
 		FROM (
-			${occurrencesThrough("expenses", accountId, sql`current_date + ${UPCOMING_DAYS}::int`)}
-		) e
+			${occurrencesThrough(table, accountId, sql`current_date + ${UPCOMING_DAYS}::int`)}
+		) t
 		WHERE on_date >= current_date
-		ORDER BY on_date, category
+		ORDER BY on_date, label
 		LIMIT 100
 	`;
 }
@@ -239,11 +253,12 @@ function upcomingExpensesQuery(accountId: string): SqlFragment {
 export interface AccountDashboard {
 	summary: DashboardSummaryRow;
 	subscriptions: SubscriptionRow[];
-	upcoming: UpcomingExpenseRow[];
+	upcomingIncomes: UpcomingRow[];
+	upcomingExpenses: UpcomingRow[];
 }
 
 /**
- * Everything the dashboard shows for one finance account. The three queries
+ * Everything the dashboard shows for one finance account. The queries
  * go in one HTTP round-trip as a read-only transaction, so they all see the
  * same snapshot of the data.
  *
@@ -255,14 +270,26 @@ export const getAccountDashboard = async ({
 	accountId: string;
 }): Promise<AccountDashboard> => {
 	const sql = getSql();
-	const [summary, subscriptions, upcoming] = (await sql.transaction(
-		[
-			summaryQuery(accountId),
-			subscriptionsQuery(accountId),
-			upcomingExpensesQuery(accountId),
-		],
-		{ readOnly: true },
-	)) as [DashboardSummaryRow[], SubscriptionRow[], UpcomingExpenseRow[]];
+	const [summary, subscriptions, upcomingIncomes, upcomingExpenses] =
+		(await sql.transaction(
+			[
+				summaryQuery(accountId),
+				subscriptionsQuery(accountId),
+				upcomingQuery("incomes", accountId),
+				upcomingQuery("expenses", accountId),
+			],
+			{ readOnly: true },
+		)) as [
+			DashboardSummaryRow[],
+			SubscriptionRow[],
+			UpcomingRow[],
+			UpcomingRow[],
+		];
 	// The summary aggregates with no GROUP BY, so it always returns one row.
-	return { summary: summary[0], subscriptions, upcoming };
+	return {
+		summary: summary[0],
+		subscriptions,
+		upcomingIncomes,
+		upcomingExpenses,
+	};
 };
