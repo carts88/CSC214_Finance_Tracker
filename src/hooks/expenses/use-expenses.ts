@@ -1,4 +1,5 @@
 import {
+	type QueryClient,
 	skipToken,
 	useMutation,
 	useQuery,
@@ -10,11 +11,23 @@ import { addExpenseFn } from "#/database/expenses/server-fn/add-expense";
 import { getExpensesFn } from "#/database/expenses/server-fn/get-expenses";
 import { removeExpenseFn } from "#/database/expenses/server-fn/remove-expense";
 import { stopRecurringExpenseFn } from "#/database/expenses/server-fn/stop-recurring-expense";
+import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
 import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
 
 export const expenseKeys = {
 	list: (accountId: string) => ["expenses", accountId] as const,
 };
+
+/**
+ * Refetches the account's expense list and its dashboard, which aggregates
+ * expenses. Called after every expense mutation.
+ */
+function invalidateExpenses(queryClient: QueryClient, accountId: string) {
+	return Promise.all([
+		queryClient.invalidateQueries({ queryKey: expenseKeys.list(accountId) }),
+		queryClient.invalidateQueries({ queryKey: dashboardKeys.all(accountId) }),
+	]);
+}
 
 /**
  * All expenses on a finance account, newest first. A recurring expense is one
@@ -59,10 +72,7 @@ export function useSaveExpense(accountId: string) {
 	return useMutation({
 		mutationFn: (values: ExpenseValues & { expenseId?: string }) =>
 			addExpenseFn({ data: { ...values, accountId } }),
-		onSettled: () =>
-			queryClient.invalidateQueries({
-				queryKey: expenseKeys.list(accountId),
-			}),
+		onSettled: () => invalidateExpenses(queryClient, accountId),
 	});
 }
 
@@ -72,11 +82,7 @@ export function useRemoveExpense(accountId: string) {
 	return useMutation({
 		mutationFn: (expenseId: string) =>
 			removeExpenseFn({ data: { accountId, expenseId } }), // calls the server function to remove the expense
-		onSettled: () =>
-			// once the mutation is settled (either success or error), refetch the expense list so stale info is not shown.
-			queryClient.invalidateQueries({
-				queryKey: expenseKeys.list(accountId),
-			}),
+		onSettled: () => invalidateExpenses(queryClient, accountId),
 	});
 }
 
@@ -86,9 +92,6 @@ export function useStopRecurringExpense(accountId: string) {
 	return useMutation({
 		mutationFn: (expenseId: string) =>
 			stopRecurringExpenseFn({ data: { accountId, expenseId } }),
-		onSettled: () =>
-			queryClient.invalidateQueries({
-				queryKey: expenseKeys.list(accountId),
-			}),
+		onSettled: () => invalidateExpenses(queryClient, accountId),
 	});
 }

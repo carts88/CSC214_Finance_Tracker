@@ -1,4 +1,5 @@
 import {
+	type QueryClient,
 	skipToken,
 	useMutation,
 	useQuery,
@@ -10,11 +11,23 @@ import { addIncomeFn } from "#/database/incomes/server-fn/add-income";
 import { getIncomesFn } from "#/database/incomes/server-fn/get-incomes";
 import { removeIncomeFn } from "#/database/incomes/server-fn/remove-income";
 import { stopRecurringIncomeFn } from "#/database/incomes/server-fn/stop-recurring-income";
+import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
 import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
 
 export const incomeKeys = {
 	list: (accountId: string) => ["incomes", accountId] as const,
 };
+
+/**
+ * Refetches the account's income list and its dashboard, which aggregates
+ * incomes. Called after every income mutation.
+ */
+function invalidateIncomes(queryClient: QueryClient, accountId: string) {
+	return Promise.all([
+		queryClient.invalidateQueries({ queryKey: incomeKeys.list(accountId) }),
+		queryClient.invalidateQueries({ queryKey: dashboardKeys.all(accountId) }),
+	]);
+}
 
 /**
  * All incomes on a finance account, newest first. A recurring income is one
@@ -59,8 +72,7 @@ export function useSaveIncome(accountId: string) {
 	return useMutation({
 		mutationFn: (values: IncomeValues & { incomeId?: string }) =>
 			addIncomeFn({ data: { ...values, accountId } }),
-		onSettled: () =>
-			queryClient.invalidateQueries({ queryKey: incomeKeys.list(accountId) }),
+		onSettled: () => invalidateIncomes(queryClient, accountId),
 	});
 }
 
@@ -70,8 +82,7 @@ export function useRemoveIncome(accountId: string) {
 	return useMutation({
 		mutationFn: (incomeId: string) =>
 			removeIncomeFn({ data: { accountId, incomeId } }),
-		onSettled: () =>
-			queryClient.invalidateQueries({ queryKey: incomeKeys.list(accountId) }),
+		onSettled: () => invalidateIncomes(queryClient, accountId),
 	});
 }
 
@@ -81,7 +92,6 @@ export function useStopRecurringIncome(accountId: string) {
 	return useMutation({
 		mutationFn: (incomeId: string) =>
 			stopRecurringIncomeFn({ data: { accountId, incomeId } }),
-		onSettled: () =>
-			queryClient.invalidateQueries({ queryKey: incomeKeys.list(accountId) }),
+		onSettled: () => invalidateIncomes(queryClient, accountId),
 	});
 }
