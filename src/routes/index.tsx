@@ -2,12 +2,16 @@ import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
+import { AssetFormSheet } from "#/components/asset-management/assets-card/asset-form-sheet";
+import { AssetsCard } from "#/components/asset-management/assets-card/assets-card";
+import { AssetsCardSkeleton } from "#/components/asset-management/assets-card/assets-card-skeleton";
 import { AddTransactionButtons } from "#/components/common/add-transaction-buttons";
 import { DeleteSelectedButton } from "#/components/common/delete-selected-button";
 import { ErrorAlert } from "#/components/common/error-alert";
-import { StatCard } from "#/components/common/stats/stat-card";
-import { StatGrid } from "#/components/common/stats/stat-grid";
-import { DashboardStats } from "#/components/dashboard/dashboard-stats";
+import {
+	DashboardStats,
+	DashboardStatsSkeleton,
+} from "#/components/dashboard/dashboard-stats";
 import { ScheduledExpensesCard } from "#/components/dashboard/scheduled-expenses-card/scheduled-expenses-card";
 import { SubscriptionsCard } from "#/components/dashboard/subscriptions-card/subscriptions-card";
 import { ExpenseFormSheet } from "#/components/expense-management/expenses-card/expense-form-sheet";
@@ -38,7 +42,9 @@ function Dashboard() {
 	const accounts = useMyAccounts();
 	const [selectedId, setSelectedId] = useState<string>();
 	/** Which "add" sheet the toolbar buttons opened, if any. */
-	const [adding, setAdding] = useState<"income" | "expense" | null>(null);
+	const [adding, setAdding] = useState<"income" | "expense" | "asset" | null>(
+		null,
+	);
 	/** Rows checked in each table; deleted together from the toolbar. */
 	const selection = useTransactionSelection();
 
@@ -70,11 +76,13 @@ function Dashboard() {
 						account={account}
 						selectedIncomes={selection.incomes}
 						selectedExpenses={selection.expenses}
+						selectedAssets={selection.assets}
 						onDeleted={selection.clear}
 					/>
 					<AddTransactionButtons
 						onAddIncome={() => setAdding("income")}
 						onAddExpense={() => setAdding("expense")}
+						onAddAsset={() => setAdding("asset")}
 					/>
 				</HeaderActions>
 			)}
@@ -90,18 +98,17 @@ function Dashboard() {
 					<DashboardStats account={account} />
 
 					{/*
-					 * Two sides on the same 3-column grid as the stat cards (same
-					 * gap-x-4 as StatGrid, so the edges line up): the at-a-glance
-					 * panel under the 1st card, the wide tables under the 2nd and
-					 * 3rd. Each side stacks on its own, so their cards never need
-					 * matching heights.
+					 * Two sides: the at-a-glance panel on the left, the wide tables
+					 * on the right: the panel takes one column of four at xl, the
+					 * tables the other three. Each side stacks on its own, so their
+					 * cards never need matching heights.
 					 */}
-					<div className="grid items-start gap-6 lg:grid-cols-3 lg:gap-x-4">
+					<div className="grid items-start gap-6 lg:grid-cols-3 lg:gap-x-4 xl:grid-cols-4">
 						<aside className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
 							<ScheduledExpensesCard account={account} />
 							<SubscriptionsCard account={account} />
 						</aside>
-						<div className="flex min-w-0 flex-col gap-6 lg:col-span-2 lg:col-start-2 lg:row-start-1">
+						<div className="flex min-w-0 flex-col gap-6 lg:col-span-2 lg:col-start-2 lg:row-start-1 xl:col-span-3">
 							<IncomesCard
 								account={account}
 								selected={selection.incomes}
@@ -111,6 +118,11 @@ function Dashboard() {
 								account={account}
 								selected={selection.expenses}
 								onSelectedChange={selection.setExpenses}
+							/>
+							<AssetsCard
+								account={account}
+								selected={selection.assets}
+								onSelectedChange={selection.setAssets}
 							/>
 						</div>
 					</div>
@@ -126,16 +138,18 @@ function Dashboard() {
 						open={adding === "expense"}
 						onClose={() => setAdding(null)}
 					/>
+					<AssetFormSheet
+						account={account}
+						open={adding === "asset"}
+						onClose={() => setAdding(null)}
+					/>
 				</div>
 			) : (
 				<>
-					<StatGrid columns={3}>
-						{["Total money", "Income", "Expenses"].map((label) => (
-							<StatCard key={label} label={label} value={null} loading />
-						))}
-					</StatGrid>
+					<DashboardStatsSkeleton />
 					<IncomesCardSkeleton />
 					<ExpensesCardSkeleton />
+					<AssetsCardSkeleton />
 				</>
 			)}
 		</div>

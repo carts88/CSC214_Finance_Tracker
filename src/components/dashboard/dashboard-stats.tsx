@@ -1,8 +1,8 @@
-import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { ErrorAlert } from "#/components/common/error-alert";
-import { StatBreakdown } from "#/components/common/stats/stat-breakdown";
-import { StatCard } from "#/components/common/stats/stat-card";
-import { StatGrid } from "#/components/common/stats/stat-grid";
+import {
+	StatStrip,
+	type StatStripItem,
+} from "#/components/common/stats/stat-strip";
 import type { UserAccountRow } from "#/database/accounts/queries.accounts";
 import { useDashboard } from "#/hooks/dashboard/use-dashboard";
 import { formatCents } from "#/lib/utils/formatters/currency";
@@ -11,7 +11,15 @@ interface IDashboardStats {
 	account: UserAccountRow;
 }
 
-/** Total money, income, and expense headline cards for an account. */
+/** The headline cells with empty values, for the page's loading state. */
+const PLACEHOLDER_ITEMS: StatStripItem[] = [
+	{ label: "Net worth", value: null, note: null },
+	{ label: "Total money", value: null, note: null },
+	{ label: "Income", value: null, note: null },
+	{ label: "Expenses", value: null, note: null },
+];
+
+/** Net worth, total money, income, and expenses in one compact strip. */
 export function DashboardStats({ account }: IDashboardStats) {
 	const dashboard = useDashboard(account.id);
 	if (dashboard.isError) {
@@ -19,57 +27,46 @@ export function DashboardStats({ account }: IDashboardStats) {
 	}
 
 	const summary = dashboard.data?.summary;
-	const loading = !summary;
-	const money = (cents: number | undefined, negative = false) =>
-		cents === undefined
-			? null
-			: formatCents(cents, account.base_currency, { negative });
+	if (!summary) return <DashboardStatsSkeleton />;
+
+	const money = (cents: number, negative = false) =>
+		formatCents(cents, account.base_currency, { negative });
 
 	return (
-		<StatGrid columns={3}>
-			<StatCard
-				label="Total money"
-				icon={Wallet}
-				value={money(summary?.total_money)}
-				tone={summary && summary.total_money < 0 ? "negative" : "neutral"}
-				description="Income minus expenses, to date"
-				loading={loading}
-			/>
-			<StatCard
-				label="Income"
-				icon={TrendingUp}
-				tone="positive"
-				value={money(summary?.income_this_month)}
-				description="This month"
-				loading={loading}
-				breakdown={
-					<StatBreakdown
-						loading={loading}
-						items={[
-							{ label: "All-time", value: money(summary?.income_to_date) },
-						]}
-					/>
-				}
-			/>
-			<StatCard
-				label="Expenses"
-				icon={TrendingDown}
-				tone="negative"
-				value={money(summary?.expense_this_month, true)}
-				description="This month"
-				loading={loading}
-				breakdown={
-					<StatBreakdown
-						loading={loading}
-						items={[
-							{
-								label: "All-time",
-								value: money(summary?.expense_to_date, true),
-							},
-						]}
-					/>
-				}
-			/>
-		</StatGrid>
+		<StatStrip
+			items={[
+				{
+					label: "Net worth",
+					value: money(summary.net_worth),
+					tone: summary.net_worth < 0 ? "negative" : "neutral",
+					note:
+						summary.asset_count > 0
+							? `Incl. ${money(summary.asset_total)} in assets`
+							: "No assets",
+				},
+				{
+					label: "Total money",
+					value: money(summary.total_money),
+					tone: summary.total_money < 0 ? "negative" : "neutral",
+					note: "Income minus expenses",
+				},
+				{
+					label: "Income",
+					value: money(summary.income_this_month),
+					tone: "positive",
+					note: `This month · ${money(summary.income_to_date)} all-time`,
+				},
+				{
+					label: "Expenses",
+					value: money(summary.expense_this_month, true),
+					tone: "negative",
+					note: `This month · ${money(summary.expense_to_date, true)} all-time`,
+				},
+			]}
+		/>
 	);
+}
+
+export function DashboardStatsSkeleton() {
+	return <StatStrip items={PLACEHOLDER_ITEMS} loading />;
 }

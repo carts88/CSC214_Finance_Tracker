@@ -138,6 +138,11 @@ export interface DashboardSummaryRow extends Record<ScheduleWindowKey, number> {
 	expense_this_month: number;
 	/** income_to_date - expense_to_date. */
 	total_money: number;
+	/** Current value of every asset on the account. */
+	asset_total: number;
+	asset_count: number;
+	/** total_money + asset_total. */
+	net_worth: number;
 	subscription_count: number;
 	/** Sum of the active subscriptions' monthly equivalents. */
 	subscription_monthly_total: number;
@@ -195,16 +200,26 @@ function summaryQuery(accountId: string): SqlFragment {
 				, COALESCE(SUM(monthly_cost), 0)::float8 AS monthly_total
 			FROM (${activeSubscriptions(accountId)}) a
 		)
+		, asset_totals AS (
+			SELECT
+				COALESCE(SUM(value), 0) AS total
+				, count(*)::int AS n
+			FROM assets
+			WHERE account_id = ${accountId}
+		)
 		SELECT
 			i.to_date::float8 AS income_to_date
 			, i.this_month::float8 AS income_this_month
 			, e.to_date::float8 AS expense_to_date
 			, e.this_month::float8 AS expense_this_month
 			, (i.to_date - e.to_date)::float8 AS total_money
+			, a.total::float8 AS asset_total
+			, a.n AS asset_count
+			, (i.to_date - e.to_date + a.total)::float8 AS net_worth
 			, ${sql.unsafe(SCHEDULE_WINDOWS.map((d) => `e.${scheduleWindowKey(d)}`).join(", "))}
 			, s.n AS subscription_count
 			, s.monthly_total AS subscription_monthly_total
-		FROM inc_totals i, exp_totals e, subs s
+		FROM inc_totals i, exp_totals e, subs s, asset_totals a
 	`;
 }
 
