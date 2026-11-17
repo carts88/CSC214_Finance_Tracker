@@ -193,7 +193,7 @@ export function UserButton({
         ) : (
           <>
             {session || sessionPending || settingActiveSession ? (
-              <UserView isPending={!!settingActiveSession} />
+              <UserView isPending={!!settingActiveSession} hideSubtitle />
             ) : (
               <>
                 <UserAvatar />
