@@ -36,7 +36,7 @@ export interface IncomeRow {
  * occurrence >= today is always included. For 'never' the bound is NULL, the
  * series is empty, and next_occurrence is NULL.
  */
-const INCOME_COLUMNS = `
+export const INCOME_COLUMNS = `
 	id
 	, amount::float8 AS amount
 	, occurred_on::text AS occurred_on
