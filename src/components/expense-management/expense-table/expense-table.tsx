@@ -12,6 +12,7 @@ import {
 } from "#/components/ui/table";
 import type { ExpenseRow } from "#/database/expenses/queries.expenses";
 import { frequencyLabel } from "#/database/schemas.recurrence";
+import { useMoney } from "#/hooks/use-money";
 import { formatDate } from "#/lib/utils/formatters/dates";
 import { nextOccurrence } from "#/lib/utils/helpers/recurrence";
 
@@ -67,14 +68,10 @@ export const ExpenseTable = ({
 	selected,
 	onSelectedChange,
 }: IExpenseTable) => {
-	const money = new Intl.NumberFormat(undefined, {
-		style: "currency",
-		currency,
-	});
+	const money = useMoney(currency);
 	// Expenses are stored as positive cents but shown as money out: -$12.50.
 	// (A zero total stays "$0.00" rather than "-$0.00".)
-	const asNegative = (cents: number) =>
-		money.format(cents === 0 ? 0 : -cents / 100);
+	const asNegative = (cents: number) => money.format(cents, { negative: true });
 
 	const selectedCount = expenses.filter((r) => selected.has(r.id)).length;
 	const allChecked =
@@ -123,8 +120,7 @@ export const ExpenseTable = ({
 			<TableBody>
 				{expenses.map((expense) => {
 					// Still has occurrences ahead of it (or hasn't started yet).
-					const isActiveSeries =
-						nextOccurrence(expense) !== null;
+					const isActiveSeries = nextOccurrence(expense) !== null;
 					const isSelected = canEdit && selected.has(expense.id);
 					return (
 						<TableRow

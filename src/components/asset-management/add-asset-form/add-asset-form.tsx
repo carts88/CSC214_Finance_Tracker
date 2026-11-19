@@ -11,12 +11,19 @@ import { categoryOptions } from "../utils/asset.utils";
 
 interface AddAssetFormProps {
 	accountId: string;
+	/** The account's base currency; amounts are entered in it. */
+	currency: string;
 	asset?: AssetRow;
 	onSaved?: (asset: AssetRow) => void;
 }
 
 /** Creates a new asset, or edits `asset` when one is passed. */
-export function AddAssetForm({ accountId, asset, onSaved }: AddAssetFormProps) {
+export function AddAssetForm({
+	accountId,
+	currency,
+	asset,
+	onSaved,
+}: AddAssetFormProps) {
 	const isEditing = Boolean(asset);
 	const saveAsset = useSaveAsset(accountId);
 
@@ -58,6 +65,7 @@ export function AddAssetForm({ accountId, asset, onSaved }: AddAssetFormProps) {
 					<form.AppField name="value">
 						{(field) => (
 							<field.CurrencyField
+								currency={currency}
 								label="Current value"
 								description="What it would sell for today."
 							/>

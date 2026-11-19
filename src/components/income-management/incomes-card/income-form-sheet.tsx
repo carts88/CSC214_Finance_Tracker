@@ -45,6 +45,7 @@ export function IncomeFormSheet({
 						// New key per income so the form's defaults reload.
 						key={income?.id ?? "new"}
 						accountId={account.id}
+						currency={account.base_currency}
 						income={income}
 						onSaved={() => {
 							toast.success(income ? "Income updated" : "Income added");

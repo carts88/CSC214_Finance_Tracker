@@ -45,6 +45,7 @@ export function ExpenseFormSheet({
 						// New key per expense so the form's defaults reload.
 						key={expense?.id ?? "new"}
 						accountId={account.id}
+						currency={account.base_currency}
 						expense={expense}
 						onSaved={() => {
 							toast.success(expense ? "Expense updated" : "Expense added");

@@ -12,12 +12,13 @@ import {
 } from "#/components/ui/table";
 import type { IncomeRow } from "#/database/incomes/queries.incomes";
 import { frequencyLabel } from "#/database/schemas.recurrence";
+import { useMoney } from "#/hooks/use-money";
 import { formatDate } from "#/lib/utils/formatters/dates";
 import { nextOccurrence } from "#/lib/utils/helpers/recurrence";
 
 interface IIncomeTable {
 	incomes: IncomeRow[];
-	/** ISO 4217 code used to format amounts, e.g. "USD". */
+	/** The account's base currency (ISO 4217, e.g. "USD") the amounts are in. */
 	currency: string;
 	/**
 	 * Whole cents earned this month with recurring incomes expanded, or
@@ -67,10 +68,7 @@ export const IncomeTable = ({
 	selected,
 	onSelectedChange,
 }: IIncomeTable) => {
-	const money = new Intl.NumberFormat(undefined, {
-		style: "currency",
-		currency,
-	});
+	const money = useMoney(currency);
 
 	const selectedCount = incomes.filter((r) => selected.has(r.id)).length;
 	const allChecked =
@@ -144,7 +142,7 @@ export const IncomeTable = ({
 								<RepeatsCell income={income} />
 							</TableCell>
 							<TableCell className="text-right tabular-nums">
-								{money.format(income.amount / 100)}
+								{money.format(income.amount)}
 							</TableCell>
 							{canEdit && (
 								<TableCell>
@@ -187,7 +185,7 @@ export const IncomeTable = ({
 				<TableRow>
 					<TableCell colSpan={canEdit ? 4 : 3}>This month</TableCell>
 					<TableCell className="text-right tabular-nums">
-						{monthTotal === undefined ? "…" : money.format(monthTotal / 100)}
+						{monthTotal === undefined ? "…" : money.format(monthTotal)}
 					</TableCell>
 					{canEdit && <TableCell />}
 				</TableRow>
