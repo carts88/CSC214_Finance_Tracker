@@ -11,9 +11,10 @@ import { FREQUENCIES } from "#/database/schemas.recurrence";
 import { useSaveExpense } from "#/hooks/expenses/use-expenses";
 import { categoryOptions } from "../utils/expense.utils";
 
-
 interface AddExpenseFormProps {
 	accountId: string;
+	/** The account's base currency; amounts are entered in it. */
+	currency: string;
 	expense?: ExpenseRow;
 	onSaved?: (expense: ExpenseRow) => void;
 }
@@ -25,6 +26,7 @@ interface AddExpenseFormProps {
  */
 export function AddExpenseForm({
 	accountId,
+	currency,
 	expense,
 	onSaved,
 }: AddExpenseFormProps) {
@@ -64,7 +66,9 @@ export function AddExpenseForm({
 			<form.Form>
 				<FieldGroup>
 					<form.AppField name="amount">
-						{(field) => <field.CurrencyField label="Amount" />}
+						{(field) => (
+							<field.CurrencyField currency={currency} label="Amount" />
+						)}
 					</form.AppField>
 
 					<form.AppField

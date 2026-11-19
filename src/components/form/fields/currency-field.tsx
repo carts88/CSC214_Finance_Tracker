@@ -5,11 +5,14 @@ import {
 	InputGroupInput,
 	InputGroupText,
 } from "#/components/ui/input-group";
+import { useMoney } from "#/hooks/use-money";
+import { currencySymbol } from "#/lib/currency";
 import {
 	type BaseFieldProps,
 	FieldShell,
 	useFieldControl,
 } from "../field-shell";
+import { useFieldContext } from "../form-context";
 
 /** Digits with at most one decimal point and two decimal places. */
 const DOLLARS_PATTERN = /^\d*\.?\d{0,2}$/;
@@ -26,8 +29,11 @@ function centsToDollars(cents: number): string {
 }
 
 type CurrencyFieldProps = BaseFieldProps & {
-	/** Symbol shown before the amount. Defaults to "$". */
-	symbol?: string;
+	/**
+	 * The account's base currency (ISO 4217) the amount is entered and stored
+	 * in. Sets the symbol shown before the input. Defaults to "USD".
+	 */
+	currency?: string;
 } & Omit<
 		ComponentProps<typeof InputGroupInput>,
 		"id" | "name" | "value" | "onChange" | "onBlur" | "type" | "inputMode"
@@ -36,18 +42,37 @@ type CurrencyFieldProps = BaseFieldProps & {
 /**
  * Money input bound to a `number` field holding **whole cents** (matching the
  * database), while the user types dollars: typing "12.50" stores 1250.
+ *
+ * Amounts are always entered in the account's own currency, so saved values
+ * never pass through an exchange rate. When the user views the site in a
+ * different currency, a hint shows the converted amount.
  */
 export function CurrencyField({
 	label,
 	description,
-	symbol = "$",
+	currency = "USD",
 	placeholder = "0.00",
 	...inputProps
 }: CurrencyFieldProps) {
+	const money = useMoney(currency);
+	const value = useFieldContext<number>().state.value ?? 0;
+	const hint =
+		money.isConverted && value > 0
+			? `≈ ${money.format(value)} at today's rate`
+			: undefined;
+	const fullDescription =
+		description && hint ? (
+			<>
+				{description} {hint}
+			</>
+		) : (
+			(description ?? hint)
+		);
+
 	const { field, id, invalid, controlProps } = useFieldControl<number>({
-		description,
+		description: fullDescription,
 	});
-	const value = field.state.value ?? 0;
+	const symbol = currencySymbol(currency);
 	// Keep the raw text so partial input like "12." isn't reformatted mid-typing.
 	const [text, setText] = useState(() => centsToDollars(value));
 
@@ -62,7 +87,7 @@ export function CurrencyField({
 			id={id}
 			invalid={invalid}
 			label={label}
-			description={description}
+			description={fullDescription}
 		>
 			<InputGroup>
 				<InputGroupAddon>

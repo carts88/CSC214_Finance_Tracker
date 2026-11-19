@@ -36,8 +36,15 @@ export const ensurePersonalAccount = async ({
 				LIMIT 1
 			)
 			, new_account AS (
-				INSERT INTO finance_accounts (name, type)
-				SELECT 'Personal', 'personal'
+				INSERT INTO finance_accounts (name, type, base_currency)
+				SELECT
+					'Personal'
+					, 'personal'
+					-- New accounts start in the user's chosen currency, if any.
+					, COALESCE(
+						(SELECT up.currency FROM user_preferences up WHERE up.user_id = ${userId}::uuid)
+						, 'USD'
+					)
 				WHERE NOT EXISTS (SELECT 1 FROM existing)
 				RETURNING id
 			)

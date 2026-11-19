@@ -18,7 +18,7 @@ import {
 	UPCOMING_DAYS,
 } from "#/database/finances/constants.finances";
 import { useDashboard } from "#/hooks/dashboard/use-dashboard";
-import { formatCents } from "#/lib/utils/formatters/currency";
+import { useMoney } from "#/hooks/use-money";
 import { formatDate } from "#/lib/utils/formatters/dates";
 
 interface IScheduledExpensesCard {
@@ -29,8 +29,8 @@ interface IScheduledExpensesCard {
 export function ScheduledExpensesCard({ account }: IScheduledExpensesCard) {
 	const dashboard = useDashboard(account.id);
 	const summary = dashboard.data?.summary;
-	const money = (cents: number) =>
-		formatCents(cents, account.base_currency, { negative: true });
+	const { format } = useMoney(account.base_currency);
+	const money = (cents: number) => format(cents, { negative: true });
 
 	return (
 		<Card>

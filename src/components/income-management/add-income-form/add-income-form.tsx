@@ -13,6 +13,8 @@ import { sourceOptions } from "../utils/income.utils";
 
 interface AddIncomeFormProps {
 	accountId: string;
+	/** The account's base currency; amounts are entered in it. */
+	currency: string;
 	income?: IncomeRow;
 	onSaved?: (income: IncomeRow) => void;
 }
@@ -24,6 +26,7 @@ interface AddIncomeFormProps {
  */
 export function AddIncomeForm({
 	accountId,
+	currency,
 	income,
 	onSaved,
 }: AddIncomeFormProps) {
@@ -62,7 +65,9 @@ export function AddIncomeForm({
 			<form.Form>
 				<FieldGroup>
 					<form.AppField name="amount">
-						{(field) => <field.CurrencyField label="Amount" />}
+						{(field) => (
+							<field.CurrencyField currency={currency} label="Amount" />
+						)}
 					</form.AppField>
 
 					<form.AppField

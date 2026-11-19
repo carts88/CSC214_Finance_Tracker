@@ -44,6 +44,7 @@ export function SellAssetSheet({
 							// New key per asset so the form's defaults reload.
 							key={asset.id}
 							accountId={account.id}
+							currency={account.base_currency}
 							asset={asset}
 							onSold={onSold}
 						/>

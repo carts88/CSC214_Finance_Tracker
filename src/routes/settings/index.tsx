@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
 	Card,
 	CardContent,
@@ -8,6 +9,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
+import {
+	usePreferences,
+	useSetCurrency,
+} from "#/hooks/preferences/use-preferences";
+import {
+	CURRENCY_LABELS,
+	currencySymbol,
+	SUPPORTED_CURRENCIES,
+} from "#/lib/currency";
 import { THEME_OPTIONS } from "#/lib/theme";
 
 export const Route = createFileRoute("/settings/")({
@@ -19,7 +29,63 @@ function SettingsPage() {
 		<div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 md:p-8">
 			<h1 className="text-3xl font-bold">Settings</h1>
 			<AppearanceCard />
+			<CurrencyCard />
 		</div>
+	);
+}
+
+function CurrencyCard() {
+	const preferences = usePreferences();
+	const setCurrency = useSetCurrency();
+	// Show the choice being saved right away instead of waiting on the server.
+	const selected = setCurrency.isPending
+		? setCurrency.variables
+		: preferences.data?.currency;
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle>Currency</CardTitle>
+				<CardDescription>
+					Show every amount in this currency. Amounts are converted using
+					European Central Bank rates, updated daily; what you've saved doesn't
+					change.
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<fieldset disabled={!preferences.data}>
+					<legend className="sr-only">Display currency</legend>
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+						{SUPPORTED_CURRENCIES.map((code) => (
+							<label
+								key={code}
+								className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border p-4 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground has-checked:border-primary has-checked:bg-accent has-checked:text-accent-foreground has-focus-visible:ring-2 has-focus-visible:ring-ring has-disabled:cursor-not-allowed has-disabled:opacity-60"
+							>
+								<input
+									type="radio"
+									name="currency"
+									value={code}
+									checked={selected === code}
+									onChange={() =>
+										setCurrency.mutate(code, {
+											onError: (error) =>
+												toast.error("Couldn't save your currency", {
+													description: error.message,
+												}),
+										})
+									}
+									className="sr-only"
+								/>
+								<span className="text-base font-semibold">
+									{currencySymbol(code)} {code}
+								</span>
+								<span className="text-xs">{CURRENCY_LABELS[code]}</span>
+							</label>
+						))}
+					</div>
+				</fieldset>
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -37,8 +103,7 @@ function AppearanceCard() {
 			<CardHeader>
 				<CardTitle>Appearance</CardTitle>
 				<CardDescription>
-					Choose how Finance Tracker looks. System follows your device
-					setting.
+					Choose how Finance Tracker looks. System follows your device setting.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>

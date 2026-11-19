@@ -45,6 +45,7 @@ export function AssetFormSheet({
 						// New key per asset so the form's defaults reload.
 						key={asset?.id ?? "new"}
 						accountId={account.id}
+						currency={account.base_currency}
 						asset={asset}
 						onSaved={() => {
 							toast.success(asset ? "Asset updated" : "Asset added");

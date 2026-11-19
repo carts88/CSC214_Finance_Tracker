@@ -11,12 +11,12 @@ import {
 	TableRow,
 } from "#/components/ui/table";
 import type { AssetRow } from "#/database/assets/queries.assets";
-import { formatCents } from "#/lib/utils/formatters/currency";
+import { useMoney } from "#/hooks/use-money";
 import { formatDate } from "#/lib/utils/formatters/dates";
 
 interface IAssetTable {
 	assets: AssetRow[];
-	/** ISO 4217 code used to format values, e.g. "USD". */
+	/** The account's base currency (ISO 4217, e.g. "USD") the values are in. */
 	currency: string;
 	/** Hides the checkboxes and sell/edit/delete buttons when false (viewers). */
 	canEdit: boolean;
@@ -39,6 +39,7 @@ export const AssetTable = ({
 	selected,
 	onSelectedChange,
 }: IAssetTable) => {
+	const { format } = useMoney(currency);
 	const total = assets.reduce((sum, asset) => sum + asset.value, 0);
 
 	const selectedCount = assets.filter((r) => selected.has(r.id)).length;
@@ -113,7 +114,7 @@ export const AssetTable = ({
 								{formatDate(asset.acquired_on)}
 							</TableCell>
 							<TableCell className="text-right tabular-nums">
-								{formatCents(asset.value, currency)}
+								{format(asset.value)}
 							</TableCell>
 							{canEdit && (
 								<TableCell>
@@ -154,7 +155,7 @@ export const AssetTable = ({
 				<TableRow>
 					<TableCell colSpan={canEdit ? 5 : 4}>Total value</TableCell>
 					<TableCell className="text-right tabular-nums">
-						{formatCents(total, currency)}
+						{format(total)}
 					</TableCell>
 					{canEdit && <TableCell />}
 				</TableRow>

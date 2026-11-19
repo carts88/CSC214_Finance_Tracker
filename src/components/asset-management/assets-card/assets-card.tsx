@@ -20,7 +20,7 @@ import {
 	useSaveAsset,
 } from "#/hooks/assets/use-assets";
 import { useRemoveIncome } from "#/hooks/incomes/use-incomes";
-import { formatCents } from "#/lib/utils/formatters/currency";
+import { useMoney } from "#/hooks/use-money";
 import { AssetFormSheet } from "./asset-form-sheet";
 import { AssetsEmptyState } from "./assets-empty-state";
 import { SellAssetSheet } from "./sell-asset-sheet";
@@ -41,6 +41,7 @@ export function AssetsCard({
 	const removeAsset = useRemoveAsset(account.id);
 	const saveAsset = useSaveAsset(account.id);
 	const removeIncome = useRemoveIncome(account.id);
+	const money = useMoney(account.base_currency);
 	// The asset being edited / sold in a sheet; adding happens from the toolbar.
 	const [editing, setEditing] = useState<AssetRow>();
 	const [selling, setSelling] = useState<AssetRow>();
@@ -69,7 +70,7 @@ export function AssetsCard({
 	function handleSold({ asset, income }: SoldAsset) {
 		setSelling(undefined);
 		toast.success(`Sold ${asset.name}`, {
-			description: `${formatCents(income.amount, account.base_currency)} added to income`,
+			description: `${money.format(income.amount)} added to income`,
 			action: {
 				label: "Undo",
 				// Put the asset back and drop the sale income.

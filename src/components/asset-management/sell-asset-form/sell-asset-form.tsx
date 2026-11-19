@@ -10,6 +10,8 @@ import { useSellAsset } from "#/hooks/assets/use-assets";
 
 interface SellAssetFormProps {
 	accountId: string;
+	/** The account's base currency; amounts are entered in it. */
+	currency: string;
 	asset: AssetRow;
 	onSold?: (sold: SoldAsset) => void;
 }
@@ -20,6 +22,7 @@ interface SellAssetFormProps {
  */
 export function SellAssetForm({
 	accountId,
+	currency,
 	asset,
 	onSold,
 }: SellAssetFormProps) {
@@ -50,6 +53,7 @@ export function SellAssetForm({
 					<form.AppField name="price">
 						{(field) => (
 							<field.CurrencyField
+								currency={currency}
 								label="Sale price"
 								description="Recorded as income on this account."
 							/>

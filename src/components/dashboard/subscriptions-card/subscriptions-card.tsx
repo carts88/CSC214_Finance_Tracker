@@ -12,7 +12,7 @@ import {
 import type { UserAccountRow } from "#/database/accounts/queries.accounts";
 import { frequencyLabel } from "#/database/schemas.recurrence";
 import { useDashboard } from "#/hooks/dashboard/use-dashboard";
-import { formatCents } from "#/lib/utils/formatters/currency";
+import { useMoney } from "#/hooks/use-money";
 import { formatDate } from "#/lib/utils/formatters/dates";
 
 interface ISubscriptionsCard {
@@ -22,8 +22,8 @@ interface ISubscriptionsCard {
 /** Recurring expenses that are still running, soonest charge first. */
 export function SubscriptionsCard({ account }: ISubscriptionsCard) {
 	const dashboard = useDashboard(account.id);
-	const money = (cents: number) =>
-		formatCents(cents, account.base_currency, { negative: true });
+	const { format } = useMoney(account.base_currency);
+	const money = (cents: number) => format(cents, { negative: true });
 
 	return (
 		<Card>

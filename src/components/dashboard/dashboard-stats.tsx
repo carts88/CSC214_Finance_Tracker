@@ -5,7 +5,7 @@ import {
 } from "#/components/common/stats/stat-strip";
 import type { UserAccountRow } from "#/database/accounts/queries.accounts";
 import { useDashboard } from "#/hooks/dashboard/use-dashboard";
-import { formatCents } from "#/lib/utils/formatters/currency";
+import { useMoney } from "#/hooks/use-money";
 
 interface IDashboardStats {
 	account: UserAccountRow;
@@ -22,6 +22,7 @@ const PLACEHOLDER_ITEMS: StatStripItem[] = [
 /** Net worth, total money, income, and expenses in one compact strip. */
 export function DashboardStats({ account }: IDashboardStats) {
 	const dashboard = useDashboard(account.id);
+	const { format } = useMoney(account.base_currency);
 	if (dashboard.isError) {
 		return <ErrorAlert title="Couldn't load totals" error={dashboard.error} />;
 	}
@@ -30,7 +31,7 @@ export function DashboardStats({ account }: IDashboardStats) {
 	if (!summary) return <DashboardStatsSkeleton />;
 
 	const money = (cents: number, negative = false) =>
-		formatCents(cents, account.base_currency, { negative });
+		format(cents, { negative });
 
 	return (
 		<StatStrip
