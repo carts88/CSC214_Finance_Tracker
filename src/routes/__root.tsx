@@ -22,6 +22,7 @@ import {
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { authClient } from '#/lib/auth-client'
+import { TEXT_SIZE_SCRIPT } from '#/lib/text-size'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
@@ -68,9 +69,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       to === '/' ? pathname === '/' : pathname.startsWith(to ?? ''),
     )?.label ?? (pathname.startsWith('/settings') ? 'Settings' : '')
   return (
-    // next-themes sets the `dark` class on <html> before hydration, so React must not warn about it.
+    // next-themes sets the `dark` class, and TEXT_SIZE_SCRIPT sets `data-text-size`,
+    // on <html> before hydration, so React must not warn about them.
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Applies the saved text size before first paint (no jump on load). */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static constant, no user input */}
+        <script dangerouslySetInnerHTML={{ __html: TEXT_SIZE_SCRIPT }} />
         <HeadContent />
       </head>
       <body>

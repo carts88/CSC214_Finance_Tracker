@@ -192,6 +192,15 @@ body,
   min-height: 100%;
 }
 
+/* Text size setting (settings page). Tailwind sizes are rem-based, so scaling
+   the root font size scales text and spacing across the whole site. */
+html[data-text-size="sm"] {
+  font-size: 87.5%; /* 14px */
+}
+html[data-text-size="lg"] {
+  font-size: 112.5%; /* 18px */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

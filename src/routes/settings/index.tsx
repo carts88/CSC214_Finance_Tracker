@@ -18,6 +18,12 @@ import {
 	currencySymbol,
 	SUPPORTED_CURRENCIES,
 } from "#/lib/currency";
+import {
+	getSavedTextSize,
+	setTextSize,
+	TEXT_SIZE_OPTIONS,
+	type TextSize,
+} from "#/lib/text-size";
 import { THEME_OPTIONS } from "#/lib/theme";
 
 export const Route = createFileRoute("/settings/")({
@@ -29,6 +35,7 @@ function SettingsPage() {
 		<div className="mx-auto flex max-w-3xl flex-col gap-6 p-4 md:p-8">
 			<h1 className="text-3xl font-bold">Settings</h1>
 			<AppearanceCard />
+			<TextSizeCard />
 			<CurrencyCard />
 		</div>
 	);
@@ -80,6 +87,54 @@ function CurrencyCard() {
 									{currencySymbol(code)} {code}
 								</span>
 								<span className="text-xs">{CURRENCY_LABELS[code]}</span>
+							</label>
+						))}
+					</div>
+				</fieldset>
+			</CardContent>
+		</Card>
+	);
+}
+
+function TextSizeCard() {
+	// The saved size lives in this browser, so only read it after hydration
+	// (same reason as the theme card below).
+	const [selected, setSelected] = useState<TextSize>();
+	useEffect(() => setSelected(getSavedTextSize()), []);
+
+	const choose = (size: TextSize) => {
+		setTextSize(size);
+		setSelected(size);
+	};
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle>Text size</CardTitle>
+				<CardDescription>
+					Make text and spacing smaller or larger across the site. Saved on
+					this device.
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<fieldset>
+					<legend className="sr-only">Text size</legend>
+					<div className="grid grid-cols-3 gap-3">
+						{TEXT_SIZE_OPTIONS.map(({ value, label, description }) => (
+							<label
+								key={value}
+								className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border p-4 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground has-checked:border-primary has-checked:bg-accent has-checked:text-accent-foreground has-focus-visible:ring-2 has-focus-visible:ring-ring"
+							>
+								<input
+									type="radio"
+									name="text-size"
+									value={value}
+									checked={selected === value}
+									onChange={() => choose(value)}
+									className="sr-only"
+								/>
+								<span className="text-base font-semibold">{label}</span>
+								<span className="text-xs">{description}</span>
 							</label>
 						))}
 					</div>
