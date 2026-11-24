@@ -26,6 +26,14 @@ export function useMoney(baseCurrency: string) {
 		/** Whole cents in `baseCurrency` -> money in `displayCurrency`. */
 		format: (cents: number, { negative = false } = {}) =>
 			formatCents(cents, displayCurrency, { negative, rate: rate ?? 1 }),
+		/** Short form for chart axes, e.g. "$1.2K". */
+		formatCompact: (cents: number) =>
+			formatCents(cents, displayCurrency, { rate: rate ?? 1, compact: true }),
+		/**
+		 * Whole cents in `baseCurrency` -> a plain number in `displayCurrency`,
+		 * rounded to cents, e.g. 1250 -> 12.5. For exports like CSV.
+		 */
+		toAmount: (cents: number) => Math.round(cents * (rate ?? 1)) / 100,
 		displayCurrency,
 		/** True when amounts are being shown converted from `baseCurrency`. */
 		isConverted,

@@ -15,6 +15,7 @@ import { Route as ApiMeRouteImport } from './routes/api/me'
 import { Route as AssetManagementIndexRouteImport } from './routes/asset-management/index'
 import { Route as AuthPathRouteImport } from './routes/auth.$path'
 import { Route as FinanceManagementIndexRouteImport } from './routes/finance-management/index'
+import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
 
@@ -48,6 +49,11 @@ const FinanceManagementIndexRoute = FinanceManagementIndexRouteImport.update({
   path: '/finance-management/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsIndexRoute = ReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/auth/$path': typeof AuthPathRoute
   '/asset-management/': typeof AssetManagementIndexRoute
   '/finance-management/': typeof FinanceManagementIndexRoute
+  '/reports/': typeof ReportsIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/auth/$path': typeof AuthPathRoute
   '/asset-management': typeof AssetManagementIndexRoute
   '/finance-management': typeof FinanceManagementIndexRoute
+  '/reports': typeof ReportsIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/transactions': typeof TransactionsIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/auth/$path': typeof AuthPathRoute
   '/asset-management/': typeof AssetManagementIndexRoute
   '/finance-management/': typeof FinanceManagementIndexRoute
+  '/reports/': typeof ReportsIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/asset-management/'
     | '/finance-management/'
+    | '/reports/'
     | '/settings/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/asset-management'
     | '/finance-management'
+    | '/reports'
     | '/settings'
     | '/transactions'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/asset-management/'
     | '/finance-management/'
+    | '/reports/'
     | '/settings/'
     | '/transactions/'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   AuthPathRoute: typeof AuthPathRoute
   AssetManagementIndexRoute: typeof AssetManagementIndexRoute
   FinanceManagementIndexRoute: typeof FinanceManagementIndexRoute
+  ReportsIndexRoute: typeof ReportsIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   TransactionsIndexRoute: typeof TransactionsIndexRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceManagementIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/': {
+      id: '/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ReportsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/': {
       id: '/settings/'
       path: '/settings'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthPathRoute: AuthPathRoute,
   AssetManagementIndexRoute: AssetManagementIndexRoute,
   FinanceManagementIndexRoute: FinanceManagementIndexRoute,
+  ReportsIndexRoute: ReportsIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,
 }

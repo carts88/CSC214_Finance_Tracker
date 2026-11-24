@@ -23,7 +23,7 @@ import { getSql } from "#/db";
  */
 
 /** A composable `sql` template that hasn't been run yet. */
-type SqlFragment = ReturnType<ReturnType<typeof getSql>>;
+export type SqlFragment = ReturnType<ReturnType<typeof getSql>>;
 
 /** Tables whose rows can repeat (`frequency` + `end_date`). */
 type RecurringTable = "incomes" | "expenses";
@@ -76,7 +76,7 @@ const SCHEDULE_WINDOW_COLUMNS = SCHEDULE_WINDOWS.map(
  * EXPENSE_COLUMNS and lib/utils/helpers/recurrence.ts. recurrence_min_days
  * gives an upper bound on k; the WHERE trims anything past the bounds.
  */
-function occurrencesThrough(
+export function occurrencesThrough(
 	table: RecurringTable,
 	accountId: string,
 	through: SqlFragment,
