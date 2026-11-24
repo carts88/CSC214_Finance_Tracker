@@ -13,6 +13,7 @@ import { removeIncomeFn } from "#/database/incomes/server-fn/remove-income";
 import { removeIncomesFn } from "#/database/incomes/server-fn/remove-incomes";
 import { stopRecurringIncomeFn } from "#/database/incomes/server-fn/stop-recurring-income";
 import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
+import { reportKeys } from "#/hooks/reports/use-report";
 import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
 
 export const incomeKeys = {
@@ -27,6 +28,7 @@ function invalidateIncomes(queryClient: QueryClient, accountId: string) {
 	return Promise.all([
 		queryClient.invalidateQueries({ queryKey: incomeKeys.list(accountId) }),
 		queryClient.invalidateQueries({ queryKey: dashboardKeys.all(accountId) }),
+		queryClient.invalidateQueries({ queryKey: reportKeys.all(accountId) }),
 	]);
 }
 

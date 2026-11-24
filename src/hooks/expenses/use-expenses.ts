@@ -13,6 +13,7 @@ import { removeExpenseFn } from "#/database/expenses/server-fn/remove-expense";
 import { removeExpensesFn } from "#/database/expenses/server-fn/remove-expenses";
 import { stopRecurringExpenseFn } from "#/database/expenses/server-fn/stop-recurring-expense";
 import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
+import { reportKeys } from "#/hooks/reports/use-report";
 import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
 
 export const expenseKeys = {
@@ -27,6 +28,7 @@ function invalidateExpenses(queryClient: QueryClient, accountId: string) {
 	return Promise.all([
 		queryClient.invalidateQueries({ queryKey: expenseKeys.list(accountId) }),
 		queryClient.invalidateQueries({ queryKey: dashboardKeys.all(accountId) }),
+		queryClient.invalidateQueries({ queryKey: reportKeys.all(accountId) }),
 	]);
 }
 

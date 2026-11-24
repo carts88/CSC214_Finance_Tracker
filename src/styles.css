@@ -64,6 +64,29 @@
   --spacing: 0.25rem;
 }
 
+/*
+ * Report chart colors: five categorical hues in a fixed order, checked for
+ * color-blind separation, plus a neutral for the folded "everything else"
+ * slice. The theme's --chart-* pastels are too close together to tell apart.
+ */
+:root {
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-other: #b4afa6;
+}
+
+.dark {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-other: #5f6675;
+}
+
 .dark {
   --background: hsl(220 25% 12%);
   --foreground: hsl(40 30% 92%);

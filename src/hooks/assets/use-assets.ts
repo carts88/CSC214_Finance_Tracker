@@ -16,6 +16,7 @@ import { removeAssetsFn } from "#/database/assets/server-fn/remove-assets";
 import { sellAssetFn } from "#/database/assets/server-fn/sell-asset";
 import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
 import { incomeKeys } from "#/hooks/incomes/use-incomes";
+import { reportKeys } from "#/hooks/reports/use-report";
 
 export const assetKeys = {
 	list: (accountId: string) => ["assets", accountId] as const,
@@ -29,6 +30,7 @@ function invalidateAssets(queryClient: QueryClient, accountId: string) {
 	return Promise.all([
 		queryClient.invalidateQueries({ queryKey: assetKeys.list(accountId) }),
 		queryClient.invalidateQueries({ queryKey: dashboardKeys.all(accountId) }),
+		queryClient.invalidateQueries({ queryKey: reportKeys.all(accountId) }),
 	]);
 }
 
