@@ -13,6 +13,7 @@ import { removeExpenseFn } from "#/database/expenses/server-fn/remove-expense";
 import { removeExpensesFn } from "#/database/expenses/server-fn/remove-expenses";
 import { stopRecurringExpenseFn } from "#/database/expenses/server-fn/stop-recurring-expense";
 import { dashboardKeys } from "#/hooks/dashboard/use-dashboard";
+import { loanKeys } from "#/hooks/loans/loan-keys";
 import { reportKeys } from "#/hooks/reports/use-report";
 import { occurrencesBetween } from "#/lib/utils/helpers/recurrence";
 
@@ -22,13 +23,18 @@ export const expenseKeys = {
 
 /**
  * Refetches the account's expense list and its dashboard, which aggregates
- * expenses. Called after every expense mutation.
+ * expenses. An expense can be a loan payment, so loans are refreshed too.
+ * Called after every expense mutation.
  */
-function invalidateExpenses(queryClient: QueryClient, accountId: string) {
+export function invalidateExpenses(
+	queryClient: QueryClient,
+	accountId: string,
+) {
 	return Promise.all([
 		queryClient.invalidateQueries({ queryKey: expenseKeys.list(accountId) }),
 		queryClient.invalidateQueries({ queryKey: dashboardKeys.all(accountId) }),
 		queryClient.invalidateQueries({ queryKey: reportKeys.all(accountId) }),
+		queryClient.invalidateQueries({ queryKey: loanKeys.all(accountId) }),
 	]);
 }
 

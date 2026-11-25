@@ -270,14 +270,16 @@ export const getAccountDashboard = async ({
 	accountId: string;
 }): Promise<AccountDashboard> => {
 	const sql = getSql();
+
+	// Run the three queries in one transaction so they all see the same snapshot, rather than subsequently.
 	const [summary, subscriptions, upcoming] = (await sql.transaction(
 		[
 			summaryQuery(accountId),
 			subscriptionsQuery(accountId),
 			upcomingExpensesQuery(accountId),
 		],
-		{ readOnly: true },
-	)) as [DashboardSummaryRow[], SubscriptionRow[], UpcomingExpenseRow[]];
+		{ readOnly: true }, 
+	)) as [DashboardSummaryRow[], SubscriptionRow[], UpcomingExpenseRow[]]; 
 	// The summary aggregates with no GROUP BY, so it always returns one row.
 	return { summary: summary[0], subscriptions, upcoming };
 };

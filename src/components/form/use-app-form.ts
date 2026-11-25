@@ -2,6 +2,7 @@ import { createFormHook } from "@tanstack/react-form";
 import { CheckboxField } from "./fields/checkbox-field";
 import { CurrencyField } from "./fields/currency-field";
 import { DateField } from "./fields/date-field";
+import { PercentField } from "./fields/percent-field";
 import { SelectField } from "./fields/select-field";
 import { TextField } from "./fields/text-field";
 import { TextareaField } from "./fields/textarea-field";
@@ -41,6 +42,7 @@ export const { useAppForm, withForm, withFieldGroup } = createFormHook({
 		TextField,
 		TextareaField,
 		CurrencyField,
+		PercentField,
 		DateField,
 		SelectField,
 		CheckboxField,

@@ -2,12 +2,19 @@ Welcome to your new TanStack Start app!
 
 # Getting Started
 
+**Requirements:** Node.js **22.12 or newer** (24 recommended — see `.nvmrc`). Check with `node -v`.
+If you use nvm, run `nvm install && nvm use` in the project folder.
+
 To run this application:
 
 ```bash
-npm install
+npm ci        # installs the exact versions from package-lock.json
+cp .env.example .env.local   # then fill in DATABASE_URL etc.
 npm run dev
 ```
+
+If you previously installed with an older Node version, delete `node_modules` and run `npm ci` again.
+In VS Code, when prompted, choose **"Use Workspace Version"** of TypeScript.
 
 # Building For Production
 

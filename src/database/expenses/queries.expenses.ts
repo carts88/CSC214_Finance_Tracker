@@ -24,6 +24,11 @@ export interface ExpenseRow {
 	end_date: string | null;
 	/** Next occurrence on or after today, or null if none is left. */
 	next_occurrence: string | null;
+	/**
+	 * The loan this expense pays (db/006_loan_payments_as_expenses.sql), or
+	 * null. When set, `category` is the loan's name.
+	 */
+	loan_id: string | null;
 	created_at: string;
 }
 
@@ -38,7 +43,6 @@ export interface ExpenseOccurrenceRow {
 
 /**
  * The SELECT/RETURNING list that produces an `ExpenseRow`. Columns are
- * unqualified so it works in both `SELECT ... FROM expenses` and `RETURNING`.
  *
  * next_occurrence: occurrence k is occurred_on + k * step, computed from
  * occurred_on each time so month-end dates don't drift. The generate_series
@@ -67,6 +71,7 @@ export const EXPENSE_COLUMNS = `
 		WHERE o.on_date >= current_date
 			AND (end_date IS NULL OR o.on_date <= end_date)
 	) AS next_occurrence
+	, loan_id
 	, created_at
 `;
 
@@ -84,6 +89,12 @@ interface IExpenseValues {
 	frequency: Frequency;
 	/** 'YYYY-MM-DD', or null for no end. Only allowed when repeating. */
 	endDate?: string | null;
+	/**
+	 * The loan this expense pays, or null. When set, the loan's name is saved
+	 * as the category (whatever `category` says), so each loan is its own
+	 * category in reports.
+	 */
+	loanId?: string | null;
 }
 
 /**
@@ -118,7 +129,9 @@ export const getUserExpenses = async ({
  * @param description optional free-text description
  * @param frequency 'never' for a one-off, otherwise how often it repeats
  * @param endDate optional last date a repeating expense can occur on
- * @returns the saved expense, or null if `expenseId` belongs to another account
+ * @param loanId optional loan this expense pays; its name becomes the category
+ * @returns the saved expense, or null if `expenseId` belongs to another
+ *   account or `loanId` isn't a loan on this account
  */
 export const upsertUserExpense = async ({
 	accountId,
@@ -129,21 +142,28 @@ export const upsertUserExpense = async ({
 	description = null,
 	frequency,
 	endDate = null,
+	loanId = null,
 }: IExpenseAccount &
 	IExpenseValues & { expenseId?: string }): Promise<ExpenseRow | null> => {
 	const sql = getSql();
+	// `loan` is the loan's row when `loanId` names one on this account. The
+	// WHERE skips the insert entirely if `loanId` is set but doesn't match.
 	const rows = (await sql`
-		INSERT INTO expenses (id, account_id, amount, occurred_on, category, description, frequency, end_date)
-		VALUES (
+		INSERT INTO expenses (id, account_id, amount, occurred_on, category, description, frequency, end_date, loan_id)
+		SELECT
 			COALESCE(${expenseId ?? null}::uuid, gen_random_uuid())
 			, ${accountId}
 			, ${amount}
 			, ${occurredOn}::date
-			, ${category}
+			, COALESCE(left(loan.name, 100), ${category})
 			, ${description}
 			, ${frequency}::recurrence_frequency
 			, ${endDate}::date
-		)
+			, loan.id
+		FROM (SELECT 1) AS one
+		LEFT JOIN loans AS loan
+			ON loan.id = ${loanId}::uuid AND loan.account_id = ${accountId}
+		WHERE ${loanId}::uuid IS NULL OR loan.id IS NOT NULL
 		ON CONFLICT (id) DO UPDATE SET
 			amount = EXCLUDED.amount
 			, occurred_on = EXCLUDED.occurred_on
@@ -151,6 +171,7 @@ export const upsertUserExpense = async ({
 			, description = EXCLUDED.description
 			, frequency = EXCLUDED.frequency
 			, end_date = EXCLUDED.end_date
+			, loan_id = EXCLUDED.loan_id
 		WHERE expenses.account_id = EXCLUDED.account_id
 		RETURNING ${sql.unsafe(EXPENSE_COLUMNS)}
 	`) as ExpenseRow[];

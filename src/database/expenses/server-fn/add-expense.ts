@@ -30,7 +30,10 @@ export const addExpenseFn = createServerFn({ method: "POST" })
 			roles: WRITE_ROLES,
 		});
 		const expense = await upsertUserExpense(data);
-		// null means `expenseId` exists but belongs to a different account.
-		if (!expense) throw new Error("Expense not found");
+		// null means `expenseId` belongs to a different account, or `loanId`
+		// isn't a loan on this account.
+		if (!expense) {
+			throw new Error(data.loanId ? "Loan not found" : "Expense not found");
+		}
 		return expense;
 	});

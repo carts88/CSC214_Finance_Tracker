@@ -14,32 +14,40 @@ import {
  */
 export const expenseValuesSchema = refineRecurrence(
 	z.object({
-	/** Whole cents, e.g. $12.50 -> 1250. */
-	amount: z
-		.number()
-		.int()
-		.positive("Enter an amount greater than $0")
-		.max(Number.MAX_SAFE_INTEGER),
-	/** Calendar date as 'YYYY-MM-DD'. */
-	occurredOn: z.iso.date("Pick a date"),
-	category: z
-		.string()
-		.trim()
-		.min(1, "Pick a category")
-		.max(100, "Keep the category under 100 characters"),
-	description: z
-		.string()
-		.trim()
-		.max(500, "Keep the description under 500 characters")
-		.nullish()
-		.transform((value) => value || null),
+		/** Whole cents, e.g. $12.50 -> 1250. */
+		amount: z
+			.number()
+			.int()
+			.positive("Enter an amount greater than $0")
+			.max(Number.MAX_SAFE_INTEGER),
+		/** Calendar date as 'YYYY-MM-DD'. */
+		occurredOn: z.iso.date("Pick a date"),
+		category: z
+			.string()
+			.trim()
+			.min(1, "Pick a category")
+			.max(100, "Keep the category under 100 characters"),
+		description: z
+			.string()
+			.trim()
+			.max(500, "Keep the description under 500 characters")
+			.nullish()
+			.transform((value) => value || null),
+		/**
+		 * The loan this expense pays, or null. When set, the server uses the
+		 * loan's name as the category, and the expense lowers the loan's balance.
+		 */
+		loanId: z
+			.uuid()
+			.nullish()
+			.transform((value) => value ?? null),
 		...recurrenceFields,
 	}),
 );
 
 export type ExpenseValues = z.input<typeof expenseValuesSchema>;
 
-/** Suggested categories for the expense form's dropdown. */
+/** expense categories for the expense form's dropdown. */
 export const EXPENSE_CATEGORIES = [
 	"Housing",
 	"Utilities",

@@ -1,17 +1,14 @@
 import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
-import { AssetFormSheet } from "#/components/asset-management/assets-card/asset-form-sheet";
+import { useActiveAccount } from "#/components/accounts/active-account-context";
 import { AssetsCard } from "#/components/asset-management/assets-card/assets-card";
 import { AssetsCardSkeleton } from "#/components/asset-management/assets-card/assets-card-skeleton";
 import { DeleteSelectedAssetsButton } from "#/components/asset-management/delete-selected-assets-button";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { HeaderActions } from "#/components/navigation/header-actions";
-import { Button } from "#/components/ui/button";
 import { canWrite } from "#/database/accounts/roles";
-import { useMyAccounts } from "#/hooks/accounts/use-my-accounts";
 import { authClient } from "#/lib/auth-client";
 
 export const Route = createFileRoute("/asset-management/")({
@@ -29,18 +26,14 @@ function AssetManagementPage() {
 		}
 	}, [signedOut, navigate]);
 
-	const accounts = useMyAccounts();
-	const [selectedId, setSelectedId] = useState<string>();
-	const [adding, setAdding] = useState(false);
+	const { accounts, account, setAccountId } = useActiveAccount();
 	/** Rows checked in the table; deleted together from the toolbar. */
 	const [selected, setSelected] = useState<Set<string>>(() => new Set());
 
 	function switchAccount(id: string) {
-		setSelectedId(id);
+		setAccountId(id);
 		setSelected(new Set());
 	}
-	const account =
-		accounts.data?.find((a) => a.id === selectedId) ?? accounts.data?.[0];
 
 	if (!session) return null;
 
@@ -64,10 +57,6 @@ function AssetManagementPage() {
 						selected={selected}
 						onDeleted={() => setSelected(new Set())}
 					/>
-					<Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-						<Plus />
-						Add asset
-					</Button>
 				</HeaderActions>
 			)}
 
@@ -77,19 +66,12 @@ function AssetManagementPage() {
 					error={accounts.error}
 				/>
 			) : account ? (
-				// Remount per account so the open sheets and forms reset on switch.
+				// Remount per account so the table resets on switch.
 				<div key={account.id} className="flex flex-col gap-6">
 					<AssetsCard
 						account={account}
 						selected={selected}
 						onSelectedChange={setSelected}
-					/>
-
-					{/* "Add" sheet opened from the toolbar (renders as an overlay). */}
-					<AssetFormSheet
-						account={account}
-						open={adding}
-						onClose={() => setAdding(false)}
 					/>
 				</div>
 			) : (
