@@ -1,4 +1,4 @@
-import { Gem, type LucideIcon, Minus, Plus } from "lucide-react";
+import { Gem, Landmark, type LucideIcon, Minus, Plus } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 import { TONES, type Tone } from "./stats/tones";
@@ -8,6 +8,8 @@ interface IAddTransactionButtons {
 	onAddExpense: () => void;
 	/** Adds an "Add asset" button to the group when given. */
 	onAddAsset?: () => void;
+	/** Adds an "Add loan" button to the group when given. */
+	onAddLoan?: () => void;
 }
 
 function GroupButton({
@@ -28,22 +30,26 @@ function GroupButton({
 			// Sharp inner corners; the group's border supplies the outer ones.
 			className={cn("h-full rounded-none px-3 font-medium", TONES[tone].hover)}
 			onClick={onClick}
+			aria-label={label}
+			title={label}
 		>
 			<Icon className={TONES[tone].text} strokeWidth={2.5} />
-			{label}
+			{/* Icon-only on narrow screens so the whole group fits the toolbar. */}
+			<span className="hidden lg:inline">{label}</span>
 		</Button>
 	);
 }
 
 /**
- * "+ Add income | − Add expense" (and optionally "Add asset") for the top
- * toolbar: one joined, outlined button group so each action is a single
- * click.
+ * "+ Add income | − Add expense" (and optionally "Add asset" / "Add loan")
+ * for the top toolbar: one joined, outlined button group so each action is a
+ * single click.
  */
 export function AddTransactionButtons({
 	onAddIncome,
 	onAddExpense,
 	onAddAsset,
+	onAddLoan,
 }: IAddTransactionButtons) {
 	return (
 		<fieldset
@@ -68,6 +74,14 @@ export function AddTransactionButtons({
 					label="Add asset"
 					tone="neutral"
 					onClick={onAddAsset}
+				/>
+			)}
+			{onAddLoan && (
+				<GroupButton
+					icon={Landmark}
+					label="Add loan"
+					tone="neutral"
+					onClick={onAddLoan}
 				/>
 			)}
 		</fieldset>

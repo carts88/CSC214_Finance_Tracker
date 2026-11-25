@@ -9,7 +9,12 @@ import {
 } from "#/database/expenses/schemas.expenses";
 import { FREQUENCIES } from "#/database/schemas.recurrence";
 import { useSaveExpense } from "#/hooks/expenses/use-expenses";
-import { categoryOptions } from "../utils/expense.utils";
+import { useLoans } from "#/hooks/loans/use-loans";
+import {
+	categoryOptions,
+	loanCategoryValue,
+	loanIdFromCategory,
+} from "../utils/expense.utils";
 
 interface AddExpenseFormProps {
 	accountId: string;
@@ -33,10 +38,17 @@ export function AddExpenseForm({
 	const isEditing = Boolean(expense); // indicates whether the form is for editing an existing expense or creating a new one
 	const saveExpense = useSaveExpense(accountId); // handles the logic for saving the expense, either creating a new one or updating an existing one
 
+	// Each loan is offered as its own category; picking one makes this
+	// expense a payment on that loan.
+	const loans = useLoans(accountId);
+
 	const defaultValues: ExpenseValues = {
 		amount: expense?.amount ?? 0,
 		occurredOn: expense?.occurred_on ?? format(new Date(), "yyyy-MM-dd"),
-		category: expense?.category ?? "",
+		// A loan payment's dropdown value is the loan, not its name.
+		category: expense?.loan_id
+			? loanCategoryValue(expense.loan_id)
+			: (expense?.category ?? ""),
 		description: expense?.description ?? "",
 		frequency: expense?.frequency ?? "never",
 		endDate: expense?.end_date ?? "",
@@ -49,6 +61,7 @@ export function AddExpenseForm({
 			// Errors thrown here show in <form.FormError />.
 			const saved = await saveExpense.mutateAsync({
 				...value,
+				loanId: loanIdFromCategory(value.category),
 				expenseId: expense?.id,
 			});
 			if (!isEditing) formApi.reset();
@@ -59,6 +72,10 @@ export function AddExpenseForm({
 	const repeats = useStore(
 		form.store,
 		(state) => state.values.frequency !== "never",
+	);
+	const paysLoan = useStore(
+		form.store,
+		(state) => loanIdFromCategory(state.values.category) !== null,
 	);
 
 	return (
@@ -116,7 +133,16 @@ export function AddExpenseForm({
 							<field.SelectField
 								label="Category"
 								placeholder="Pick a category"
-								options={categoryOptions(expense?.category)}
+								description={
+									paysLoan
+										? `Counts as a payment on this loan${repeats ? " each time it repeats" : ""}, lowering its balance.`
+										: undefined
+								}
+								options={categoryOptions(
+									// A loan payment's category is its loan, already listed.
+									expense?.loan_id ? undefined : expense?.category,
+									loans.data,
+								)}
 							/>
 						)}
 					</form.AppField>

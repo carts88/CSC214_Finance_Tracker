@@ -15,6 +15,7 @@ import { Route as ApiMeRouteImport } from './routes/api/me'
 import { Route as AssetManagementIndexRouteImport } from './routes/asset-management/index'
 import { Route as AuthPathRouteImport } from './routes/auth.$path'
 import { Route as FinanceManagementIndexRouteImport } from './routes/finance-management/index'
+import { Route as LoanManagementIndexRouteImport } from './routes/loan-management/index'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
@@ -49,6 +50,11 @@ const FinanceManagementIndexRoute = FinanceManagementIndexRouteImport.update({
   path: '/finance-management/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoanManagementIndexRoute = LoanManagementIndexRouteImport.update({
+  id: '/loan-management/',
+  path: '/loan-management/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsIndexRoute = ReportsIndexRouteImport.update({
   id: '/reports/',
   path: '/reports/',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/auth/$path': typeof AuthPathRoute
   '/asset-management/': typeof AssetManagementIndexRoute
   '/finance-management/': typeof FinanceManagementIndexRoute
+  '/loan-management/': typeof LoanManagementIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/auth/$path': typeof AuthPathRoute
   '/asset-management': typeof AssetManagementIndexRoute
   '/finance-management': typeof FinanceManagementIndexRoute
+  '/loan-management': typeof LoanManagementIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/transactions': typeof TransactionsIndexRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/auth/$path': typeof AuthPathRoute
   '/asset-management/': typeof AssetManagementIndexRoute
   '/finance-management/': typeof FinanceManagementIndexRoute
+  '/loan-management/': typeof LoanManagementIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/asset-management/'
     | '/finance-management/'
+    | '/loan-management/'
     | '/reports/'
     | '/settings/'
     | '/transactions/'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/asset-management'
     | '/finance-management'
+    | '/loan-management'
     | '/reports'
     | '/settings'
     | '/transactions'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/asset-management/'
     | '/finance-management/'
+    | '/loan-management/'
     | '/reports/'
     | '/settings/'
     | '/transactions/'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   AuthPathRoute: typeof AuthPathRoute
   AssetManagementIndexRoute: typeof AssetManagementIndexRoute
   FinanceManagementIndexRoute: typeof FinanceManagementIndexRoute
+  LoanManagementIndexRoute: typeof LoanManagementIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   TransactionsIndexRoute: typeof TransactionsIndexRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceManagementIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/loan-management/': {
+      id: '/loan-management/'
+      path: '/loan-management'
+      fullPath: '/loan-management/'
+      preLoaderRoute: typeof LoanManagementIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports/': {
       id: '/reports/'
       path: '/reports'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthPathRoute: AuthPathRoute,
   AssetManagementIndexRoute: AssetManagementIndexRoute,
   FinanceManagementIndexRoute: FinanceManagementIndexRoute,
+  LoanManagementIndexRoute: LoanManagementIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,

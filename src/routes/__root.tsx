@@ -10,7 +10,9 @@ import {
 import type { ComponentProps } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '#/components/auth/auth-provider'
+import { ActiveAccountProvider } from '#/components/accounts/active-account-context'
 import { AppSidebar } from '#/components/navigation/app-sidebar'
+import { GlobalAddActions } from '#/components/navigation/global-add-actions'
 import { HEADER_ACTIONS_ID } from '#/components/navigation/header-actions'
 import { NAV_ITEMS } from '#/components/navigation/navigation-config'
 import { Separator } from '#/components/ui/separator'
@@ -98,6 +100,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             redirectTo="/"
           >
             <TooltipProvider>
+              <ActiveAccountProvider>
               {showSidebar ? (
                 <SidebarProvider>
                   <AppSidebar />
@@ -109,11 +112,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                         className="mr-2 data-[orientation=vertical]:h-4"
                       />
                       <span className="text-sm font-medium">{pageTitle}</span>
-                      {/* Pages fill this via <HeaderActions>. */}
-                      <div
-                        id={HEADER_ACTIONS_ID}
-                        className="ml-auto flex items-center gap-2"
-                      />
+                      <div className="ml-auto flex items-center gap-2">
+                        {/* Page-specific actions; pages fill this via <HeaderActions>. */}
+                        <div
+                          id={HEADER_ACTIONS_ID}
+                          className="flex items-center gap-2"
+                        />
+                        {/* Add income / expense / asset / loan, on every page. */}
+                        <GlobalAddActions />
+                      </div>
                     </header>
                     <div className="flex-1">{children}</div>
                   </SidebarInset>
@@ -121,6 +128,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               ) : (
                 children
               )}
+              </ActiveAccountProvider>
             </TooltipProvider>
             <Toaster />
           </AuthProvider>

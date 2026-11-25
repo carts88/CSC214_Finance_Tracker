@@ -1,10 +1,10 @@
 import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
+import { useActiveAccount } from "#/components/accounts/active-account-context";
 import { ErrorAlert } from "#/components/common/error-alert";
 import { Reports } from "#/components/reports/reports";
-import { useMyAccounts } from "#/hooks/accounts/use-my-accounts";
 import { authClient } from "#/lib/auth-client";
 
 export const Route = createFileRoute("/reports/")({
@@ -22,10 +22,7 @@ function ReportsPage() {
 		}
 	}, [signedOut, navigate]);
 
-	const accounts = useMyAccounts();
-	const [selectedId, setSelectedId] = useState<string>();
-	const account =
-		accounts.data?.find((a) => a.id === selectedId) ?? accounts.data?.[0];
+	const { accounts, account, setAccountId } = useActiveAccount();
 
 	if (!session) return null;
 
@@ -37,7 +34,7 @@ function ReportsPage() {
 					<AccountPicker
 						accounts={accounts.data}
 						value={account.id}
-						onChange={setSelectedId}
+						onChange={setAccountId}
 					/>
 				)}
 			</div>

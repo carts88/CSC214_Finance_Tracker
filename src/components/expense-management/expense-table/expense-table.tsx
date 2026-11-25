@@ -1,4 +1,4 @@
-import { CircleStop, Pencil, Repeat, Trash2 } from "lucide-react";
+import { CircleStop, Landmark, Pencil, Repeat, Trash2 } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import {
@@ -141,7 +141,22 @@ export const ExpenseTable = ({
 							<TableCell className="whitespace-nowrap">
 								{formatDate(expense.occurred_on)}
 							</TableCell>
-							<TableCell>{expense.category}</TableCell>
+							<TableCell>
+								{expense.loan_id ? (
+									<span
+										className="inline-flex items-center gap-1.5"
+										title="Payment on this loan"
+									>
+										<Landmark
+											className="size-3.5 text-muted-foreground"
+											aria-label="Loan payment"
+										/>
+										{expense.category}
+									</span>
+								) : (
+									expense.category
+								)}
+							</TableCell>
 							<TableCell className="max-w-xs truncate text-muted-foreground">
 								{expense.description || "—"}
 							</TableCell>

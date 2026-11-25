@@ -1,11 +1,10 @@
 import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AccountPicker } from "#/components/accounts/account-picker";
-import { AssetFormSheet } from "#/components/asset-management/assets-card/asset-form-sheet";
+import { useActiveAccount } from "#/components/accounts/active-account-context";
 import { AssetsCard } from "#/components/asset-management/assets-card/assets-card";
 import { AssetsCardSkeleton } from "#/components/asset-management/assets-card/assets-card-skeleton";
-import { AddTransactionButtons } from "#/components/common/add-transaction-buttons";
 import { DeleteSelectedButton } from "#/components/common/delete-selected-button";
 import { ErrorAlert } from "#/components/common/error-alert";
 import {
@@ -14,15 +13,12 @@ import {
 } from "#/components/dashboard/dashboard-stats";
 import { ScheduledExpensesCard } from "#/components/dashboard/scheduled-expenses-card/scheduled-expenses-card";
 import { SubscriptionsCard } from "#/components/dashboard/subscriptions-card/subscriptions-card";
-import { ExpenseFormSheet } from "#/components/expense-management/expenses-card/expense-form-sheet";
 import { ExpensesCard } from "#/components/expense-management/expenses-card/expenses-card";
 import { ExpensesCardSkeleton } from "#/components/expense-management/expenses-card/expenses-card-skeleton";
-import { IncomeFormSheet } from "#/components/income-management/incomes-card/income-form-sheet";
 import { IncomesCard } from "#/components/income-management/incomes-card/incomes-card";
 import { IncomesCardSkeleton } from "#/components/income-management/incomes-card/incomes-card-skeleton";
 import { HeaderActions } from "#/components/navigation/header-actions";
 import { canWrite } from "#/database/accounts/roles";
-import { useMyAccounts } from "#/hooks/accounts/use-my-accounts";
 import { useTransactionSelection } from "#/hooks/use-transaction-selection";
 import { authClient } from "#/lib/auth-client";
 
@@ -39,21 +35,14 @@ function Dashboard() {
 		}
 	}, [signedOut, navigate]);
 
-	const accounts = useMyAccounts();
-	const [selectedId, setSelectedId] = useState<string>();
-	/** Which "add" sheet the toolbar buttons opened, if any. */
-	const [adding, setAdding] = useState<"income" | "expense" | "asset" | null>(
-		null,
-	);
+	const { accounts, account, setAccountId } = useActiveAccount();
 	/** Rows checked in each table; deleted together from the toolbar. */
 	const selection = useTransactionSelection();
 
 	function switchAccount(id: string) {
-		setSelectedId(id);
+		setAccountId(id);
 		selection.clear();
 	}
-	const account =
-		accounts.data?.find((a) => a.id === selectedId) ?? accounts.data?.[0];
 
 	if (!session) return null;
 
@@ -79,11 +68,6 @@ function Dashboard() {
 						selectedAssets={selection.assets}
 						onDeleted={selection.clear}
 					/>
-					<AddTransactionButtons
-						onAddIncome={() => setAdding("income")}
-						onAddExpense={() => setAdding("expense")}
-						onAddAsset={() => setAdding("asset")}
-					/>
 				</HeaderActions>
 			)}
 
@@ -93,7 +77,7 @@ function Dashboard() {
 					error={accounts.error}
 				/>
 			) : account ? (
-				// Remount per account so the open sheets and forms reset on switch.
+				// Remount per account so the tables reset on switch.
 				<div key={account.id} className="flex flex-col gap-6">
 					<DashboardStats account={account} />
 
@@ -126,23 +110,6 @@ function Dashboard() {
 							/>
 						</div>
 					</div>
-
-					{/* "Add" sheets opened from the toolbar (they render as overlays). */}
-					<IncomeFormSheet
-						account={account}
-						open={adding === "income"}
-						onClose={() => setAdding(null)}
-					/>
-					<ExpenseFormSheet
-						account={account}
-						open={adding === "expense"}
-						onClose={() => setAdding(null)}
-					/>
-					<AssetFormSheet
-						account={account}
-						open={adding === "asset"}
-						onClose={() => setAdding(null)}
-					/>
 				</div>
 			) : (
 				<>

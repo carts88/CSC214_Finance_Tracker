@@ -3,6 +3,7 @@ import {
 	ArrowLeftRight,
 	ChartPie,
 	Gem,
+	Landmark,
 	LayoutDashboard,
 	type LucideIcon,
 	Receipt,
@@ -19,5 +20,6 @@ export const NAV_ITEMS: NavItem[] = [
 	{ label: "Dashboard", to: "/", icon: LayoutDashboard },
 	{ label: "Finance Management", to: "/finance-management", icon: Receipt },
 	{ label: "Asset Management", to: "/asset-management", icon: Gem },
+	{ label: "Loan Management", to: "/loan-management", icon: Landmark },
 	{ label: "Reports", to: "/reports", icon: ChartPie },
 ];
